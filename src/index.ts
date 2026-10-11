@@ -10,6 +10,7 @@ import { applyAction,courtesyDownload,courtesySessionDownload,login,logout,myAcc
 
 async function route(req:Request,env:Env,ctx:ExecutionContext):Promise<Response>{
  const url=new URL(req.url),p=url.pathname,method=req.method;
+ if(method==="GET" && (p.startsWith("/brand/") || p.startsWith("/fonts/") || ["/manifest.webmanifest","/sw.js","/robots.txt","/favicon.ico"].includes(p)))return env.ASSETS.fetch(req);
  if(p==="/app.js"&&method==="GET")return new Response(clientJS,{headers:{"content-type":"application/javascript; charset=utf-8","cache-control":"public, max-age=300","x-content-type-options":"nosniff"}});
  if(p==="/health")return json({service:"atpcursos",stage:env.ENVIRONMENT||"staging",ready:!!env.DB&&!!env.PDFS});
  if((p==="/"||p==="/loja")&&method==="GET")return html(storefront(),req);

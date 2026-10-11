@@ -6,7 +6,8 @@
     "dev": "wrangler dev",
     "build": "tsc --noEmit",
     "test": "node --import tsx --test tests/*.test.ts",
-    "deploy": "wrangler deploy"
+    "deploy": "wrangler deploy",
+    "build:pages": "node tools/build-pages.mjs"
   },
   "dependencies": {
     "@pdf-lib/fontkit": "^1.1.1",
@@ -16,6 +17,7 @@
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20261011.1",
     "@types/node": "^24.0.0",
+    "esbuild": "^0.28.2",
     "tsx": "^4.23.15",
     "typescript": "^5.9.0",
     "wrangler": "^4.149.0"
