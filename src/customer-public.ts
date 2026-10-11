@@ -95,7 +95,7 @@ async function markedPdf(env:Env,row:CourtesyDoc):Promise<Response>{
   page.drawText(email,{x:16,y:14,size:footerSize,font,color:rgb(0.2,0.3,0.4),opacity:0.5});
  }
  const bytes=await pdf.save();
- return new Response(bytes,{headers:{"content-type":"application/pdf","content-disposition":"attachment; filename=ATPCursos-cortesia.pdf","cache-control":"private, no-store","referrer-policy":"no-referrer","x-content-type-options":"nosniff"}});
+ return new Response(new Uint8Array(bytes).buffer,{headers:{"content-type":"application/pdf","content-disposition":"attachment; filename=ATPCursos-cortesia.pdf","cache-control":"private, no-store","referrer-policy":"no-referrer","x-content-type-options":"nosniff"}});
 }
 export async function courtesyDownload(env:Env,token:string){
  if(!/^[0-9a-f]{64}$/.test(token))return plain("Link inválido",403);
