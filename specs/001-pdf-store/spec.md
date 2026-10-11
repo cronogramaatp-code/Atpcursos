@@ -57,3 +57,26 @@ Acessível, SEO, OpenGraph, sitemap, logs estruturados sem PII, monitoramento de
 
 ## Pontos a confirmar
 Domínio oficial; preços; nome/e-mail remetente Resend verificado; regras de expiração/reenvio; tamanho máximo PDFs; razão social e textos jurídicos; InfiniteTag/escopos de checkout; autorização/limitações comerciais de artes.
+
+
+## Adendo 002 — gestão de alunos, cortesias e acesso opcional (2026-10-11)
+### Funcionalidades
+- Loja pública e interface administrativa isoladas por Cloudflare Access. A página `/adm/alunos` permite cadastrar, pesquisar, conceder cortesias de qualquer PDF publicado, visualizar cortesias existentes, reenviar e revogar.
+- Cortesia é direito gratuito (`courtesy_grants`) independente de pedidos pagos. **Jamais somar em receita, MRR, ticket médio ou compras para desconto de fidelidade.**
+- Validade configurável: permanente ou 1–366 dias. Links privados são individuais, 72 horas e até cinco downloads; PDF contém nome e e-mail do destinatário.
+- Compras pagas verificadas criam perfil de aluno **sem senha**. Conta com senha é opcional, ativada por link de criação/redefinição enviado ao e-mail.
+- Administrador pode **solicitar** alteração de e-mail, mas a troca só ocorre após confirmação pelo novo endereço. Antes da confirmação, não alterar destinatário da conta.
+- Admin não conhece nem vê senha: solicita link de redefinição de uma hora; aluno define senha mínima 12 caracteres. Sessões atuais são invalidadas ao trocar senha ou e-mail.
+- Alteração do e-mail da conta **não reescreve comprovantes de pedidos históricos**; mudanças de destinatário de compras anteriores necessitam fluxo posterior de auditoria/reentrega.
+- Ausência de login obrigatório para compra; compradores continuam recebendo PDFs pagos pelo e-mail informado.
+
+### QA necessário
+- [x] Pure functions: tokens únicos e hash, validação de email/nome, validade da cortesia, PBKDF2 e login.
+- [ ] Integração D1 + R2 + Resend de cortesia, mudança de email e reset com e-mail real.
+- [ ] Teste de identidade Cloudflare Access e autorização por perfis.
+- [ ] Verificação antiproliferação de token, rate limit e revogação de sessões.
+- [ ] PDF com nome/e-mail em todas as páginas, inclusive nomes com acentos e PDFs grandes.
+- [ ] Teste de login após confirmação, hash de senha e recuperação; E2E navegador.
+- [ ] Verificação independente de dados financeiros de cortesia não lançados em vendas.
+
+**Status: código preparado em branch; não implantado e não homologado para uso real.**
