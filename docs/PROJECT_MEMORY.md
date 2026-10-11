@@ -29,3 +29,10 @@ Preço por material, domínio, nome/e-mail do remetente, InfiniteTag adequada, p
 2. Aprovar visual sobre assets finais, sem inventar nova logo.
 3. TDD local com mocks e artefatos de homologação; configurar staging dedicado.
 4. Só depois testar checkout real e deploy.
+
+
+## Continuação de 2026-10-11 — Cortesia, e-mail e senha
+Pedido: adicionar ao admin concessão de cortesia gratuita de PDFs, gestão e alteração de e-mail dos alunos e troca/redefinição de senha de acesso. Mantida compra pública sem senha; contas são opcionais e podem surgir automaticamente após pagamento validado.
+Implementado na branch `feat/spec-kit-loja-pdfs`: migrations `0002_courtesies_accounts.sql`, `0003_login_throttle.sql`, módulos `customer-admin.ts`, `customer-public.ts`, `admin-customers-ui.ts`, `domain/customer.ts`, testes de validação, senha e tokens, rotas integradas com app de checkout existente. Admin: `/adm/alunos`; comprador: `/meus-materiais`; confirmação `/confirmar`.
+Cortesia não gera ordem de pagamento nem entra na receita. Expiração opcional. Reset via e-mail (1 hora), token hash e senha derivada PBKDF2; troca de e-mail validada no novo endereço. Sessões invalidadas após mudanças.
+Ainda pendente: migrar D1 de staging dedicado, configurar Cloudflare Access, Resend e R2, testes com PDFs reais, mensagens de recuperação, E2E, ambiente protegido e publicação. **Não afirmar disponibilização real em produção.**
