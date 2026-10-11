@@ -54,6 +54,8 @@ jobs:
         run: npm ci --no-audit --no-fund
       - name: Checagem TypeScript
         run: npm run build
+      - name: Build MCP Cloudflare Pages
+        run: npm run build:pages
       - name: Testes MCP fail-closed
         run: npm test
       - name: Vulnerabilidades de producao
