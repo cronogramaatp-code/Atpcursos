@@ -1,0 +1,159 @@
+{
+  "service": "atpcursos-mcp",
+  "protocol": "Streamable HTTP",
+  "status": "SPECIFIED",
+  "version": "0.1.0",
+  "authentication": {
+    "mode": "Cloudflare Access Managed OAuth",
+    "jwt": "RS256 JWKS iss aud exp",
+    "owner_allowlist": true,
+    "missing_auth": "deny",
+    "real_deployment": false
+  },
+  "tools": [
+    {
+      "name": "platform_status",
+      "scope": "atpcursos:read",
+      "risk": "N1",
+      "enabled": "staging"
+    },
+    {
+      "name": "sales_dashboard",
+      "scope": "atpcursos:read",
+      "risk": "N2",
+      "enabled": "staging"
+    },
+    {
+      "name": "online_sessions",
+      "scope": "atpcursos:read",
+      "risk": "N2",
+      "enabled": "staging"
+    },
+    {
+      "name": "products_list",
+      "scope": "atpcursos:read",
+      "risk": "N2",
+      "enabled": "staging"
+    },
+    {
+      "name": "orders_search",
+      "scope": "atpcursos:admin",
+      "risk": "N2",
+      "enabled": "planned"
+    },
+    {
+      "name": "delivery_failures",
+      "scope": "atpcursos:admin",
+      "risk": "N2",
+      "enabled": "planned"
+    },
+    {
+      "name": "customers_search",
+      "scope": "atpcursos:admin",
+      "risk": "N2",
+      "enabled": "planned"
+    },
+    {
+      "name": "products_create",
+      "scope": "atpcursos:admin",
+      "risk": "N3",
+      "enabled": "staging"
+    },
+    {
+      "name": "products_update",
+      "scope": "atpcursos:admin",
+      "risk": "N3",
+      "enabled": "planned"
+    },
+    {
+      "name": "products_publish",
+      "scope": "atpcursos:admin",
+      "risk": "N3",
+      "enabled": "staging"
+    },
+    {
+      "name": "product_pdf_import",
+      "scope": "atpcursos:admin",
+      "risk": "N3",
+      "enabled": "planned"
+    },
+    {
+      "name": "discount_policy_get",
+      "scope": "atpcursos:read",
+      "risk": "N1",
+      "enabled": "staging"
+    },
+    {
+      "name": "delivery_retry",
+      "scope": "atpcursos:admin",
+      "risk": "N3",
+      "enabled": "planned"
+    },
+    {
+      "name": "customer_courtesy_grant",
+      "scope": "atpcursos:admin",
+      "risk": "N3",
+      "enabled": "planned"
+    },
+    {
+      "name": "customer_courtesy_revoke",
+      "scope": "atpcursos:admin",
+      "risk": "N3",
+      "enabled": "planned"
+    },
+    {
+      "name": "reconcile_payments",
+      "scope": "atpcursos:admin",
+      "risk": "N3",
+      "enabled": "planned"
+    },
+    {
+      "name": "repo_status",
+      "scope": "atpcursos:developer",
+      "risk": "N2",
+      "enabled": "planned"
+    },
+    {
+      "name": "review_source",
+      "scope": "atpcursos:developer",
+      "risk": "N2",
+      "enabled": "planned"
+    },
+    {
+      "name": "run_tests",
+      "scope": "atpcursos:developer",
+      "risk": "N3",
+      "enabled": "planned"
+    },
+    {
+      "name": "deploy_staging",
+      "scope": "atpcursos:developer",
+      "risk": "N3",
+      "enabled": "planned"
+    },
+    {
+      "name": "quality_gate",
+      "scope": "atpcursos:developer",
+      "risk": "N2",
+      "enabled": "planned"
+    },
+    {
+      "name": "production_release",
+      "scope": "atpcursos:owner",
+      "risk": "N4",
+      "enabled": "blocked_until_qa"
+    },
+    {
+      "name": "rollback_production",
+      "scope": "atpcursos:owner",
+      "risk": "N4",
+      "enabled": "blocked_until_qa"
+    }
+  ],
+  "limitations": [
+    "Never return secrets",
+    "No arbitrary filesystem/shell/SQL commands",
+    "No other ATP/Cripto projects",
+    "N4 requires signed protected artifact and independent evidence"
+  ]
+}
