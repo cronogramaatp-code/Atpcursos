@@ -34,3 +34,13 @@
 - Cloudflare Assets fetch: https://developers.cloudflare.com/workers/static-assets/binding/
 - pdf-lib + @pdf-lib/fontkit: https://github.com/Hopding/pdf-lib
 - Fonte Noto Sans: https://github.com/notofonts/noto-fonts
+
+## Evidências de QA adicionais — 11/10/2026
+- **Commit da correção funcional:** `0cb06201043fc0a2fd810d9fc6b82304955a338e`. GitHub Actions concluiu com sucesso.
+- **Loja:** 21 testes Node/TypeScript passaram; **MCP:** 4 testes de bloqueio/autenticação passaram.
+- **Testes de esquema:** 3 migrações aplicadas ao SQLite/D1 local isolado, com validação de cortesia sem receita.
+- **HTTP em Worker local real:** 13 verificações aprovadas (saúde, home, produto, manifesto, favicon, ícone, imagem social, fonte Unicode, script, catálogo, admin bloqueado, portal do comprador e checkout bloqueado no staging). Worker encerrado ao final.
+- **Staging D1 remoto:** confirmou-se ausência de `customer_login_limits`; foi executado exclusivamente `CREATE TABLE IF NOT EXISTS customer_login_limits (...)` conforme `0003_login_throttle.sql`, com nova consulta confirmando a tabela. Nenhum pedido, cliente ou pagamento modificado. A trilha de `d1_migrations` ainda precisa ser conferida antes de futuras migrações remotas.
+- **Métricas de qualidade:** `npm audit --omit=dev --audit-level=high` sem vulnerabilidades reportadas; bundle Wrangler `--dry-run` gerado incluindo arquivos do PWA, marca e Noto Sans.
+- **Sincronização:** GitHub e duas pastas locais do VAIO validados com hashes coincidentes para os arquivos rastreados.
+- **Falta:** Worker não publicado; InfinitePay e Resend reais e OAuth da outra conta ChatGPT continuam não homologados. Quality Gate global: **PARTIAL**.
