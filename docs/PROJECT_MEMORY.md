@@ -47,3 +47,12 @@ Esta seção **substitui estados antigos** de planejamento, logo ausente e infra
 - Evidências: 21 testes loja, 4 MCP, migrações 0001–0003 local, 13 verificações HTTP locais com encerramento do Worker, pacote Wrangler `--dry-run`, auditoria de dependências de produção sem vulnerabilidades de nível alto/crítico, CI no GitHub PASS no commit de código.
 - Projeto local em `C:\Users\VAIO-FE16\Desktop\ATPCursos-dev` e clone `ATPCursos-git`; manter ambos sincronizados com GitHub. Artefatos temporários/backup fora do Git.
 - Quality Gate **PARTIAL**: inexistem testes comprovados de transações reais ou e-mail real; falta URL staging, credenciais/Cloudflare Access, OAuth MCP para outra conta ChatGPT, produtos licenciados e aprovação da release. Nunca declarar plataforma concluída ou vendas habilitadas antes desses testes.
+
+## Atualização operacional — domínios staging e integrações
+- O projeto já foi publicado na Cloudflare Pages, não apenas compilado: loja `atpcursos-staging` e MCP `atpcursos-mcp-staging`, branches GitHub integradas, staging sem pagamento real.
+- Hostnames de homologação ativos: `staging-atpcursos.cronogramaatp.com.br` (loja) e `mcp-atpcursos-staging.cronogramaatp.com.br` (MCP). Foram necessárias exceções de rota `script:null` para vencer o wildcard do Cronograma ATP, sem alterá-lo.
+- O admin está protegido no edge pelo Cloudflare Access em `/adm` e `/api/admin/*`, MCP em `/mcp` com outra aplicação Access. Admin e MCP ainda aguardam configuração segura do JWT dentro das Pages; login funcional NÃO validado.
+- Resend validou o domínio de envio `atpcursos.cronogramaatp.com.br` com DKIM/SPF/MX/CNAME (região Brasil). Não foi enviada mensagem real nem provisionada chave Resend na Pages.
+- A conexão Cloudflare não permitiu salvar secrets nesta execução; não repetir tentativa por outro caminho para evitar contornar bloqueio. Próxima etapa depende do fluxo seguro de configuração de segredos pela pessoa administradora.
+- Todas as cópias de código acompanhadas na branch `feat/spec-kit-loja-pdfs`, com branch de backup local para preservar commit equivalente. Última conferência da loja: 21 testes; MCP: 4 testes; builds Pages aprovados. 
+- Faltam credenciais/merchant InfinitePay, remetente escolhido explicitamente para o envio de teste, segredos de Access/Resend, teste da segunda conta ChatGPT, cadastro dos PDFs reais e Quality Gate de produção. **Status PARTIAL**.
