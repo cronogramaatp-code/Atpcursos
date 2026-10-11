@@ -3,9 +3,11 @@ import { McpServer } from "@modelcontextprotocol/server";
 import { createMcpHandler } from "agents/mcp/server";
 import { z } from "zod";
 import { registerDeveloperTools } from "./developer-tools";
+import { registerProductionTools } from "./production-tools";
 
 interface Env {
  DB: D1Database; PDFS: R2Bucket;
+ PROD_DB?: D1Database; PROD_PDFS?: R2Bucket; PRODUCTION_ADMIN_WRITES?: string;
  ACCESS_TEAM_DOMAIN?: string; ACCESS_AUD?: string; ADMIN_ALLOWED_EMAILS?: string;
  ENVIRONMENT?: string; GITHUB_TOKEN?: string; ALLOW_PRODUCTION_DEPLOY?: string; PRODUCTION_PROJECT_READY?: string;
 }
@@ -89,10 +91,11 @@ function makeServer(env:Env,actor:string){
   }catch{return failure("Reenvio indisponível")}
  });
  s.registerTool("developer_status",{description:"Prontidão de desenvolvimento, revisão e deploy protegidos",inputSchema:{}},async()=>
-  output({repository:"cronogramaatp-code/Atpcursos",environment:env.ENVIRONMENT||"staging",github_token_configured:!!env.GITHUB_TOKEN,production_deploy_allowed:env.ALLOW_PRODUCTION_DEPLOY==="true"&&env.PRODUCTION_PROJECT_READY==="true"&&!!env.GITHUB_TOKEN,reason:env.GITHUB_TOKEN?"Deployment requires explicit confirmation, current SHA, CI PASS and fast-forward main":"GitHub repository credential not configured"}));
+  output({repository:"cronogramaatp-code/Atpcursos",environment:env.ENVIRONMENT||"staging",environments_available:["staging",...(env.PROD_DB&&env.PROD_PDFS?["production"]:[])],production_admin_writes_enabled:env.PRODUCTION_ADMIN_WRITES==="true"&&!!env.PROD_DB&&!!env.PROD_PDFS,github_token_configured:!!env.GITHUB_TOKEN,production_deploy_allowed:env.ALLOW_PRODUCTION_DEPLOY==="true"&&env.PRODUCTION_PROJECT_READY==="true"&&!!env.GITHUB_TOKEN,reason:env.GITHUB_TOKEN?"Deployment requires explicit confirmation, current SHA, CI PASS and fast-forward main":"GitHub repository credential not configured"}));
  s.registerTool("quality_gate",{description:"Consultar controles de release sem acionar publicação",inputSchema:{}},async()=>output({
   status:"PARTIAL",tests:"requires validated CI evidence",payments:"requires independent test",oauth:"requires Access and cross-account Inspector",production_deploy:"BLOCKED until PASS"}));
 registerDeveloperTools(s,env,actor);
+ registerProductionTools(s,env,actor);
  return s;
 }
 const unauthorized=()=>new Response("MCP não autorizado",{status:401,headers:{"WWW-Authenticate":"Bearer realm=\"ATPCursos MCP\"","cache-control":"no-store"}});
