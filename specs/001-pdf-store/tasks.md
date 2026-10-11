@@ -37,3 +37,19 @@ Legenda: [ ] pendente; [x] documentação criada; [!] bloqueio/decisão.
 - [ ] E05 Canary 1 produto piloto, rollback, monitoramento.
 
 **Gate atual: PARTIAL (planejamento)**. Nenhuma função de compra real em produção.
+
+
+## Adendo 002 — gestão de alunos e cortesias
+- [x] S01 Modelo `customers`, `courtesy_grants`, `courtesy_download_tokens`, `customer_action_tokens`, `customer_sessions`.
+- [x] S02 UI administrativa `/adm/alunos` com cadastro, pesquisa, liberação, reenvio e revogação.
+- [x] S03 API administrador e auditoria de cortesias, e-mail e redefinição de senha.
+- [x] S04 Confirmação do novo e-mail por link; conta opcional com senha PBKDF2, sessão HttpOnly e revogação.
+- [x] S05 Redução brute force via `customer_login_limits` com janela de 15 minutos.
+- [x] S06 Cadastrar automaticamente compradores após confirmação de pagamento.
+- [x] S07 Typecheck e testes unitários da lógica principal.
+- [ ] S08 Aplicar migrations em D1 dedicado staging e testar end-to-end com Resend e R2.
+- [ ] S09 Conectar compra real, testar webhook oficial e validar controle de acesso.
+- [ ] S10 Política de reenvio e conteúdo protegido, evidências OWASP, acessibilidade e autorização para deploy.
+- [ ] S11 Testes de carga e PDF com Unicode; nenhum dado real em QA.
+
+**Gate: PARTIAL; não marcar conclusão da funcionalidade até testes E2E e publicação verificada.**
