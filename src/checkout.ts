@@ -1,6 +1,7 @@
 import { Env, json, uuid, readJSON, moneyOK, emailOK, emailHash } from "./infra";
 import { quotePrice } from "./domain/pricing";
 import { fulfillOrder } from "./fulfillment";
+import { notifyConfirmedSale } from "./sale-alerts";
 import { isTrustedCheckoutUrl,verifiedPaymentAmount } from "./domain/infinitepay";
 type P={id:string;title:string;price_cents:number;original_key:string};
 const isUUID=(v:string)=>/^[a-f0-9-]{36}$/i.test(v);
@@ -88,7 +89,7 @@ export async function receiveWebhook(req:Request,env:Env,ctx:ExecutionContext){
   .bind(uuid(),id,transaction,"received:"+slug).run();
  // No automatic fulfillment until payment_check verifies the amount server-to-server.
  ctx.waitUntil((async()=>{
-  try{if(await confirmPayment(env,id,transaction,slug))await fulfillOrder(env,id)}
+  try{if(await confirmPayment(env,id,transaction,slug))await Promise.allSettled([fulfillOrder(env,id),notifyConfirmedSale(env,id)])}
   catch{/* Durable event is retained for scheduled reconciliation. */}
  })());
  return json({success:true,message:null});
@@ -100,10 +101,16 @@ export async function reconcile(env:Env){
   try{
    if(await confirmPayment(env,e.order_id,e.transaction_nsu,e.status.slice(9))){
     await env.DB.prepare("UPDATE payment_events SET status='reconciled' WHERE id=?").bind(e.id).run();
-    await fulfillOrder(env,e.order_id);
+    await Promise.allSettled([fulfillOrder(env,e.order_id),notifyConfirmedSale(env,e.order_id)]);
    }
   }catch{}
  }
  const pending=await env.DB.prepare("SELECT id FROM orders WHERE status='paid' ORDER BY paid_at ASC LIMIT 10").all<{id:string}>();
- for(const o of pending.results)try{await fulfillOrder(env,o.id)}catch{}
+ for(const o of pending.results)try{await Promise.allSettled([fulfillOrder(env,o.id),notifyConfirmedSale(env,o.id)])}catch{}
+ // Reconcile missed alerts, including already delivered orders, without blocking payment settlement.
+ try {
+  const missed=await env.DB.prepare("SELECT o.id FROM orders o LEFT JOIN sale_alerts a ON a.order_id=o.id WHERE o.status IN ('paid','delivered') AND (a.order_id IS NULL OR a.status='error') ORDER BY o.paid_at DESC LIMIT 20").all<{id:string}>();
+  for(const o of missed.results)try{await notifyConfirmedSale(env,o.id)}catch{}
+ }catch{/* The notification migration may not have run; never block reconciliation. */}
+
 }

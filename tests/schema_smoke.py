@@ -8,7 +8,7 @@ db.execute("PRAGMA foreign_keys=ON")
 for file in sorted((root/"migrations").glob("*.sql")):
     db.executescript(file.read_text(encoding="utf-8"))
 tables={x[0] for x in db.execute("SELECT name FROM sqlite_master WHERE type='table'")}
-required={"products","orders","customers","courtesy_grants","courtesy_download_tokens","customer_action_tokens","customer_sessions","customer_login_limits"}
+required={"products","orders","customers","courtesy_grants","courtesy_download_tokens","customer_action_tokens","customer_sessions","customer_login_limits","store_settings","sale_alerts"}
 assert required <= tables, required-tables
 p="11111111-1111-4111-8111-111111111111"
 c="22222222-2222-4222-8222-222222222222"
@@ -22,4 +22,11 @@ try:
 except sqlite3.IntegrityError: pass
 count=db.execute("SELECT COUNT(*) FROM orders").fetchone()[0]
 assert count==0, "courtesy should never create a sale"
-print("PASS: migrations 0001-0003; unique grant, zero revenue, all tables created")
+# Confirm the administrative sale alert is unique per verified order.
+order_id="88888888-8888-4888-8888-888888888888"
+db.execute("INSERT INTO orders(id,buyer_name,buyer_email,buyer_email_hash,status,total_cents,full_cents,provider_order_nsu) VALUES(?,?,?,?,?,?,?,?)",
+ (order_id,"Comprador Teste","comprador@example.org","hash-test","paid",9800,12000,order_id))
+db.execute("INSERT INTO sale_alerts(order_id,status) VALUES(?,'pending')",(order_id,))
+db.execute("INSERT OR IGNORE INTO sale_alerts(order_id,status) VALUES(?,'pending')",(order_id,))
+assert db.execute("SELECT COUNT(*) FROM sale_alerts WHERE order_id=?",(order_id,)).fetchone()[0]==1
+print("PASS: migrations 0001-0004; unique sale alerts and courtesy grants")
