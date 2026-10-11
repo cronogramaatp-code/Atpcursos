@@ -22,7 +22,7 @@ export async function quote(env:Env,email:string,ids:string[]){
  return {products,hash,pricing:quotePrice(products.map(p=>({id:p.id,priceCents:p.price_cents})),result?.n||0)};
 }
 export async function createCheckout(req:Request,env:Env){
- if(!env.INFINITEPAY_HANDLE||!env.BUYER_HASH_KEY)return json({error:"Pagamento ainda em configuração"},503);
+ if(env.CHECKOUT_ENABLED!=="true"||!env.INFINITEPAY_HANDLE||!env.BUYER_HASH_KEY)return json({error:"Pagamento ainda em configuração"},503);
  const d=await readJSON(req),name=typeof d.name==="string"?d.name.trim():"",
  email=typeof d.email==="string"?d.email.trim().toLowerCase():"",
  ids=Array.isArray(d.productIds)&&d.productIds.every(x=>typeof x==="string")?d.productIds as string[]:[];

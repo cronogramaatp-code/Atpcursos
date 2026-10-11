@@ -2,11 +2,12 @@ import { jwtVerify, createRemoteJWKSet } from "jose";
 import { McpServer } from "@modelcontextprotocol/server";
 import { createMcpHandler } from "agents/mcp/server";
 import { z } from "zod";
+import { registerDeveloperTools } from "./developer-tools";
 
 interface Env {
  DB: D1Database; PDFS: R2Bucket;
  ACCESS_TEAM_DOMAIN?: string; ACCESS_AUD?: string; ADMIN_ALLOWED_EMAILS?: string;
- ENVIRONMENT?: string; GITHUB_TOKEN?: string;
+ ENVIRONMENT?: string; GITHUB_TOKEN?: string; ALLOW_PRODUCTION_DEPLOY?: string; PRODUCTION_PROJECT_READY?: string;
 }
 const output=(value:unknown)=>({content:[{type:"text" as const,text:JSON.stringify(value)}]});
 const failure=(reason:string)=>({content:[{type:"text" as const,text:reason}],isError:true});
@@ -88,24 +89,10 @@ function makeServer(env:Env,actor:string){
   }catch{return failure("Reenvio indisponível")}
  });
  s.registerTool("developer_status",{description:"Prontidão de desenvolvimento, revisão e deploy protegidos",inputSchema:{}},async()=>
-  output({repository:"cronogramaatp-code/Atpcursos",environment:env.ENVIRONMENT||"staging",github_token_configured:!!env.GITHUB_TOKEN,production_deploy_allowed:false,reason:"Requires CI PASS and protected deployment gate"}));
+  output({repository:"cronogramaatp-code/Atpcursos",environment:env.ENVIRONMENT||"staging",github_token_configured:!!env.GITHUB_TOKEN,production_deploy_allowed:env.ALLOW_PRODUCTION_DEPLOY==="true"&&env.PRODUCTION_PROJECT_READY==="true"&&!!env.GITHUB_TOKEN,reason:env.GITHUB_TOKEN?"Deployment requires explicit confirmation, current SHA, CI PASS and fast-forward main":"GitHub repository credential not configured"}));
  s.registerTool("quality_gate",{description:"Consultar controles de release sem acionar publicação",inputSchema:{}},async()=>output({
   status:"PARTIAL",tests:"requires validated CI evidence",payments:"requires independent test",oauth:"requires Access and cross-account Inspector",production_deploy:"BLOCKED until PASS"}));
- s.registerTool("developer_repo_read",{description:"Ler arquivo somente do repositório ATPCursos (somente código permitido)",inputSchema:{path:z.string().min(1).max(180)}},async({path})=>{
-  if(!env.GITHUB_TOKEN)return failure("GitHub developer token não configurado");
-  if(!/^(src|mcp|docs|specs|migrations)\/[a-zA-Z0-9_./-]+\.(ts|md|sql|json|css|tsx)$/.test(path)||path.includes("..")||path.includes(".env"))
-   return failure("Caminho não permitido");
-  try{
-   const url="https://api.github.com/repos/cronogramaatp-code/Atpcursos/contents/"+path.split("/").map(encodeURIComponent).join("/")+"?ref=main";
-   const res=await fetch(url,{headers:{"authorization":"Bearer "+env.GITHUB_TOKEN,"accept":"application/vnd.github+json","user-agent":"ATPCursos-MCP"}});
-   if(!res.ok)return failure("Arquivo inacessível");
-   const d=await res.json() as {content?:string;encoding?:string;size?:number;sha?:string};
-   if(d.size&&d.size>25000)return failure("Arquivo grande: usar revisão paginada");
-   if(d.encoding!=="base64"||!d.content)return failure("Formato não permitido");
-   const bytes=Uint8Array.from(atob(d.content.replace(/\s/g,"")),c=>c.charCodeAt(0));
-   return output({path,sha:d.sha,content:new TextDecoder().decode(bytes)});
-  }catch{return failure("GitHub indisponível")}
- });
+registerDeveloperTools(s,env,actor);
  return s;
 }
 const unauthorized=()=>new Response("MCP não autorizado",{status:401,headers:{"WWW-Authenticate":"Bearer realm=\"ATPCursos MCP\"","cache-control":"no-store"}});
