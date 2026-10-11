@@ -50,3 +50,9 @@
 - Build configurado: `npm run build:pages`, saindo em `dist/_worker.js` e arquivos estáticos. D1 e R2 exclusivos de homologação vinculados; `ENVIRONMENT=staging` bloqueia checkout real.
 - Build Pages local validado com teste HTTP, inclusive bloqueio da administração sem Cloudflare Access. A existência do domínio não garante publicação: verificar deploy e SSL antes de marcar PASS.
 - O domínio oficial, segredos, e-mails transacionais e OAuth do MCP continuam separados e bloqueados até integração e QA ponta a ponta.
+
+## MCP separado — Cloudflare Pages (11/10/2026)
+- Projeto `atpcursos-mcp-staging` criado, origem GitHub `cronogramaatp-code/Atpcursos` com raiz de build `mcp/`, saída `dist/_worker.js` e domínio reservado `atpcursos-mcp-staging.pages.dev`.
+- Build `npm run build:pages` validado, 4 testes de segurança, canário HTTP local (saúde 200, acesso anônimo ao MCP 401). Integrado à CI.
+- D1/R2 de homologação associados; `ENVIRONMENT=staging`. **OAuth, Cloudflare Access e a permissão da segunda conta ChatGPT ainda não configurados**. Não habilitar operações administrativas remotas sem verificação de identidade.
+- Loja `atpcursos-staging.pages.dev` publicada em homologação, com 7 verificações HTTP públicas aprovadas e pagamentos bloqueados.
