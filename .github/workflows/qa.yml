@@ -1,0 +1,59 @@
+name: ATPCursos | Build e testes isolados
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [feat/spec-kit-loja-pdfs]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: atpcursos-qa-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  store:
+    name: Loja / pagamentos / marca d'agua
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Dependencias travadas
+        run: npm ci --no-audit --no-fund
+      - name: Checagem TypeScript
+        run: npm run build
+      - name: Testes unitarios
+        run: npm test
+      - name: Vulnerabilidades de producao
+        run: npm audit --omit=dev --audit-level=high
+
+  mcp:
+    name: MCP owner / autorizacao
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mcp
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: mcp/package-lock.json
+      - name: Dependencias travadas
+        run: npm ci --no-audit --no-fund
+      - name: Checagem TypeScript
+        run: npm run build
+      - name: Testes MCP fail-closed
+        run: npm test
+      - name: Vulnerabilidades de producao
+        run: npm audit --omit=dev --audit-level=high
+
+# No automatic publication, DNS, payment or secrets changes.
+# CI success is necessary but insufficient for the deployment Quality Gate.
