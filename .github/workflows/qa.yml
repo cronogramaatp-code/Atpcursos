@@ -30,6 +30,8 @@ jobs:
         run: npm run build
       - name: Testes unitarios
         run: npm test
+      - name: Migracoes SQL e regras de cortesia
+        run: python3 tests/schema_smoke.py
       - name: Vulnerabilidades de producao
         run: npm audit --omit=dev --audit-level=high
 
