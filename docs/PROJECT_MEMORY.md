@@ -36,3 +36,14 @@ Pedido: adicionar ao admin concessão de cortesia gratuita de PDFs, gestão e al
 Implementado na branch `feat/spec-kit-loja-pdfs`: migrations `0002_courtesies_accounts.sql`, `0003_login_throttle.sql`, módulos `customer-admin.ts`, `customer-public.ts`, `admin-customers-ui.ts`, `domain/customer.ts`, testes de validação, senha e tokens, rotas integradas com app de checkout existente. Admin: `/adm/alunos`; comprador: `/meus-materiais`; confirmação `/confirmar`.
 Cortesia não gera ordem de pagamento nem entra na receita. Expiração opcional. Reset via e-mail (1 hora), token hash e senha derivada PBKDF2; troca de e-mail validada no novo endereço. Sessões invalidadas após mudanças.
 Ainda pendente: migrar D1 de staging dedicado, configurar Cloudflare Access, Resend e R2, testes com PDFs reais, mensagens de recuperação, E2E, ambiente protegido e publicação. **Não afirmar disponibilização real em produção.**
+
+## Estado consolidado — QA e staging em 11/10/2026
+Esta seção **substitui estados antigos** de planejamento, logo ausente e infraestrutura inexistente acima.
+- Branch em andamento: `feat/spec-kit-loja-pdfs`, PR #1 aberto em modo draft. Checkout real bloqueado em ambiente não produção.
+- Identidade oficial metálica ATP publicada em `public/brand/`: favicon, PWA, imagem social, Apple Touch e cabeçalhos. Mascotes para materiais futuros.
+- Cloudflare possui recursos **dedicados** `atpcursos-staging-db` (D1) e `atpcursos-staging-pdfs` (R2 privado), sem Worker ATPCursos implantado e sem domínio oficial definido.
+- D1 staging remoto: a tabela `customer_login_limits` de `0003_login_throttle.sql` foi criada com `IF NOT EXISTS` após revisão e confirmada com consulta. Não foi aplicado SQL destrutivo. Verificar rastreamento D1 de migrations antes de novos deploys.
+- Correções publicadas em `0cb0620`: checkout da InfinitePay aceita `checkout.infinitepay.com.br` (e rejeita hostnames falsos); confirmador exige `paid=true` e `amount` idêntico ao pedido; PDF usa Noto Sans Unicode sob SIL OFL e preserva nome/e-mail; PWA usa atualização rede-primeiro para arquivos públicos.
+- Evidências: 21 testes loja, 4 MCP, migrações 0001–0003 local, 13 verificações HTTP locais com encerramento do Worker, pacote Wrangler `--dry-run`, auditoria de dependências de produção sem vulnerabilidades de nível alto/crítico, CI no GitHub PASS no commit de código.
+- Projeto local em `C:\Users\VAIO-FE16\Desktop\ATPCursos-dev` e clone `ATPCursos-git`; manter ambos sincronizados com GitHub. Artefatos temporários/backup fora do Git.
+- Quality Gate **PARTIAL**: inexistem testes comprovados de transações reais ou e-mail real; falta URL staging, credenciais/Cloudflare Access, OAuth MCP para outra conta ChatGPT, produtos licenciados e aprovação da release. Nunca declarar plataforma concluída ou vendas habilitadas antes desses testes.
