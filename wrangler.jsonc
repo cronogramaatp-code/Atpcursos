@@ -1,10 +1,16 @@
 {
+  "$schema": "node_modules/wrangler/config-schema.json",
   "name": "atpcursos-staging",
   "main": "src/index.ts",
   "compatibility_date": "2026-10-11",
   "compatibility_flags": ["nodejs_compat"],
-  "observability": { "enabled": true },
-  // Configure dedicated D1, R2 and Queues bindings only after staging resources have been approved.
-  // No production resources or shared bindings are inherited from Cronograma ATP.
-  "vars": { "ENVIRONMENT": "staging" }
+  "observability": {"enabled":true},
+  "d1_databases": [
+    {"binding":"DB","database_name":"atpcursos-staging-db","database_id":"e8bca86c-c018-4ef7-ab85-c5508f9b1caa"}
+  ],
+  "r2_buckets": [
+    {"binding":"PDFS","bucket_name":"atpcursos-staging-pdfs"}
+  ],
+  "triggers": {"crons":["*/10 * * * *"]},
+  "vars": {"ENVIRONMENT":"staging"}
 }
