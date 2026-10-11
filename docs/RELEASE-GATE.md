@@ -76,3 +76,11 @@
 - Loja HTTPS staging publicada e funcional em `https://staging-atpcursos.cronogramaatp.com.br/loja`. Admin redireciona ao Cloudflare Access, mas o Worker continua fechado enquanto não houver variáveis de autenticação no ambiente. MCP staging retorna HTTP 401 sem token e precisa de OAuth configurado antes de ser conectado à outra conta ChatGPT.
 - Resend: subdomínio remetente verificado; **não há `RESEND_API_KEY` no ambiente Pages**. Portanto, alertas automáticos ainda não foram enviados na prática. Credenciais não devem ir para Git, chat ou logs. Tentativa anterior de gravar segredos por conector foi bloqueada por controles de segurança; não contornar esse bloqueio.
 - Nenhuma compra real, e-mail transacional de produção ou senha administrativa fixa foi ativada. Quality Gate global continua **PARTIAL**. Não liberar compras, publicar PR em `main` nem marcar conexão MCP como aprovada sem os testes autenticados correspondentes.
+
+
+## Producao Pages protegida - 11/10/2026
+- Cloudflare Pages: atpcursos-producao (branch main), D1 de producao e bucket R2 exclusivos.
+- Checkout exige CHECKOUT_ENABLED=true e todas as credenciais e testes de pagamento: fica desligado por padrao.
+- O MCP pode ler arquivos e PDFs originais; a edicao autorizada usa branch feature, CI e auditoria.
+- O proprio MCP nao pode alterar seus arquivos nem workflows sem revisao separada.
+- A publicacao de codigo nao autoriza cobrancas sem homologacao independente.
