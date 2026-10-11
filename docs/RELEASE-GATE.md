@@ -44,3 +44,9 @@
 - **Métricas de qualidade:** `npm audit --omit=dev --audit-level=high` sem vulnerabilidades reportadas; bundle Wrangler `--dry-run` gerado incluindo arquivos do PWA, marca e Noto Sans.
 - **Sincronização:** GitHub e duas pastas locais do VAIO validados com hashes coincidentes para os arquivos rastreados.
 - **Falta:** Worker não publicado; InfinitePay e Resend reais e OAuth da outra conta ChatGPT continuam não homologados. Quality Gate global: **PARTIAL**.
+
+## Cloudflare Pages staging — 11/10/2026
+- Projeto dedicado criado: `atpcursos-staging`, domínio técnico `atpcursos-staging.pages.dev`, origem GitHub `cronogramaatp-code/Atpcursos` na branch `feat/spec-kit-loja-pdfs`.
+- Build configurado: `npm run build:pages`, saindo em `dist/_worker.js` e arquivos estáticos. D1 e R2 exclusivos de homologação vinculados; `ENVIRONMENT=staging` bloqueia checkout real.
+- Build Pages local validado com teste HTTP, inclusive bloqueio da administração sem Cloudflare Access. A existência do domínio não garante publicação: verificar deploy e SSL antes de marcar PASS.
+- O domínio oficial, segredos, e-mails transacionais e OAuth do MCP continuam separados e bloqueados até integração e QA ponta a ponta.
