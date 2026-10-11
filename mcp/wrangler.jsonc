@@ -1,12 +1,15 @@
 {
- "name":"atpcursos-mcp-staging",
- "main":"src/index.ts",
- "compatibility_date":"2026-10-11",
- "compatibility_flags":["nodejs_compat"],
- "observability":{"enabled":true},
- "vars":{"ENVIRONMENT":"staging"}
- // Before staging/prod: add dedicated D1/R2 bindings and Access Managed OAuth.
- // Required secrets: ACCESS_AUD, ACCESS_TEAM_DOMAIN, ADMIN_ALLOWED_EMAILS;
- // optional scoped GITHUB_TOKEN (ATPCursos-only) for developer read.
- // Do not deploy this MCP without both Access and in-Worker JWT validation.
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "atpcursos-mcp-staging",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-11",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {"enabled":true},
+  "d1_databases": [
+    {"binding":"DB","database_name":"atpcursos-staging-db","database_id":"e8bca86c-c018-4ef7-ab85-c5508f9b1caa"}
+  ],
+  "r2_buckets": [
+    {"binding":"PDFS","bucket_name":"atpcursos-staging-pdfs"}
+  ],
+  "vars": {"ENVIRONMENT":"staging"}
 }
