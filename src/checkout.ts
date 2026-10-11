@@ -1,6 +1,7 @@
 import { Env, json, uuid, readJSON, moneyOK, emailOK, emailHash } from "./infra";
 import { quotePrice } from "./domain/pricing";
 import { fulfillOrder } from "./fulfillment";
+import { isTrustedCheckoutUrl,verifiedPaymentAmount } from "./domain/infinitepay";
 type P={id:string;title:string;price_cents:number;original_key:string};
 const isUUID=(v:string)=>/^[a-f0-9-]{36}$/i.test(v);
 export async function quote(env:Env,email:string,ids:string[]){
@@ -39,8 +40,7 @@ export async function createCheckout(req:Request,env:Env){
    customer:{name,email}})});
  const res=await r.json() as {url?:string;link?:string;checkout_url?:string};
  const checkoutUrl=res.url||res.link||res.checkout_url||"";
- let valid=false;try{const u=new URL(checkoutUrl);valid=u.protocol==="https:"&&
- (u.hostname==="infinitepay.io"||u.hostname.endsWith(".infinitepay.io"))}catch{}
+ const valid=isTrustedCheckoutUrl(checkoutUrl);
  if(!r.ok||!valid){
   await env.DB.prepare("UPDATE orders SET status='checkout_failed' WHERE id=? AND status='pending'").bind(orderId).run();
   return json({error:"Não foi possível abrir pagamento"},502);
@@ -59,7 +59,7 @@ export async function confirmPayment(env:Env,id:string,transaction:string,slug:s
   body:JSON.stringify({handle:env.INFINITEPAY_HANDLE,order_nsu:id,transaction_nsu:transaction,slug})});
  if(!r.ok)return false;
  const j=await r.json() as {success?:boolean;paid?:boolean;amount?:number};
- if(j.success!==true||j.paid!==true||j.amount!==order.total_cents)return false;
+ if(!verifiedPaymentAmount(j,order.total_cents))return false;
  const update=await env.DB.prepare("UPDATE orders SET status='paid',transaction_nsu=?,paid_at=CURRENT_TIMESTAMP WHERE id=? AND status='pending'")
   .bind(transaction,id).run();
  if((update.meta?.changes||0)!==1)return false;

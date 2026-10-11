@@ -1,16 +1,34 @@
-import { PDFDocument, StandardFonts, degrees, rgb } from "pdf-lib";
-import { Env, json, plain, uuid, now, sha256 } from "./infra";
-async function personalize(source:ArrayBuffer,name:string,email:string){
+import { PDFDocument, degrees, rgb } from "pdf-lib";
+import fontkit from "@pdf-lib/fontkit";
+import { Env, plain, uuid, now, sha256 } from "./infra";
+
+/**
+ * Stamp the exact buyer identity using an OFL-licensed Unicode font.
+ * Never normalize, transliterate or strip buyer names.
+ */
+export async function personalize(source:ArrayBuffer,name:string,email:string,fontBytes:ArrayBuffer):Promise<Uint8Array> {
  const doc=await PDFDocument.load(source,{ignoreEncryption:false});
- const font=await doc.embedFont(StandardFonts.Helvetica);
- for(const page of doc.getPages()){
+ doc.registerFontkit(fontkit);
+ const font=await doc.embedFont(fontBytes,{subset:true});
+ const buyer=name.trim();
+ const recipient=email.trim();
+ if(!buyer||!recipient)throw Error("EMPTY_WATERMARK_IDENTITY");
+ const centered="EXCLUSIVO: "+buyer+" | "+recipient;
+ const footer="ATPCursos | "+buyer+" | "+recipient;
+ const pages=doc.getPages();
+ if(!pages.length)throw Error("PDF_WITHOUT_PAGES");
+ for(const page of pages){
   const {width,height}=page.getSize();
-  const text="EXCLUSIVO: "+name+" • "+email;
-  const size=Math.max(6,Math.min(16,(width*0.62)/Math.max(1,font.widthOfTextAtSize(text,1))));
-  page.drawText(text,{x:width*0.12,y:height*0.53,size,font,rotate:degrees(25),color:rgb(.24,.36,.58),opacity:.16});
-  const footer="ATPCursos | "+name+" | "+email;
+  const size=Math.max(6,Math.min(16,(width*0.69)/Math.max(1,font.widthOfTextAtSize(centered,1))));
+  page.drawText(centered,{
+   x:width*0.09,y:height*0.51,size,font,rotate:degrees(25),
+   color:rgb(.24,.36,.58),opacity:.16
+  });
   const fs=Math.max(5,Math.min(8,(width-32)/Math.max(1,font.widthOfTextAtSize(footer,1))));
-  page.drawText(footer,{x:16,y:Math.min(17,height*.027),size:fs,font,color:rgb(.22,.32,.47),opacity:.6});
+  page.drawText(footer,{
+   x:16,y:Math.min(17,height*.027),size:fs,font,
+   color:rgb(.22,.32,.47),opacity:.58
+  });
  }
  return doc.save();
 }
@@ -37,7 +55,13 @@ export async function fulfillOrder(env:Env,id:string){
   try{
    const raw=await env.PDFS.get(item.original_key_snapshot);
    if(!raw||raw.size>15*1024*1024)throw Error("PDF_UNAVAILABLE");
-   const marked=await personalize(await raw.arrayBuffer(),order.buyer_name,order.buyer_email);
+   // Font is an open-licensed static asset; the paid PDF never becomes public.
+   const fontAsset=await env.ASSETS.fetch("https://assets.local/fonts/NotoSans-Regular.ttf");
+   if(!fontAsset.ok)throw Error("WATERMARK_FONT_MISSING");
+   const marked=await personalize(
+    await raw.arrayBuffer(),order.buyer_name,order.buyer_email,
+    await fontAsset.arrayBuffer()
+   );
    const key="personalized/"+id+"/"+item.id+".pdf";
    await env.PDFS.put(key,marked,{httpMetadata:{contentType:"application/pdf"}});
    const token=uuid()+uuid(),tokenHash=await sha256(token);

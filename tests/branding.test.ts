@@ -51,4 +51,5 @@ test("PWA service worker cannot cache PDFs, orders or admin routes",()=>{
  assert.match(js,/isPublicAsset/);
  assert.match(js,/if\(!isPublicAsset\(p\)\)return/);
  assert.ok(!js.includes("cache.put(req"));
+ assert.match(js,/try\{return await fetchFresh\}catch/);
 });

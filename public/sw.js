@@ -33,6 +33,6 @@ self.addEventListener("fetch",event=>{
    if(response.ok&&response.type!=="opaque")await cache.put(p,response.clone());
    return response;
   });
-  return found||fetchFresh;
+  try{return await fetchFresh}catch{return found||new Response('Offline',{status:503})}
  }));
 });
