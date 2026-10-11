@@ -56,3 +56,14 @@
 - Build `npm run build:pages` validado, 4 testes de segurança, canário HTTP local (saúde 200, acesso anônimo ao MCP 401). Integrado à CI.
 - D1/R2 de homologação associados; `ENVIRONMENT=staging`. **OAuth, Cloudflare Access e a permissão da segunda conta ChatGPT ainda não configurados**. Não habilitar operações administrativas remotas sem verificação de identidade.
 - Loja `atpcursos-staging.pages.dev` publicada em homologação, com 7 verificações HTTP públicas aprovadas e pagamentos bloqueados.
+
+## Domínios, e-mail e autenticação — estado de homologação
+- A loja foi validada por HTTPS em `https://staging-atpcursos.cronogramaatp.com.br/loja`: saúde, catálogo, manifesto PWA e marca respondem HTTP 200. `/adm` e `/api/admin/*` redirecionam a Cloudflare Access (HTTP 302).
+- O MCP foi validado por HTTPS em `https://mcp-atpcursos-staging.cronogramaatp.com.br`: `/health` responde HTTP 200 e `/mcp` redireciona a Cloudflare Access (HTTP 302); diretamente em pages.dev permanece fail-closed sem JWT.
+- **Roteamento:** o wildcard original `*.cronogramaatp.com.br/*` do Cronograma ATP interceptava os subdomínios. Foram criadas duas exceções MAIS ESPECÍFICAS com `script: null` apenas para `staging-atpcursos.cronogramaatp.com.br/*` e `mcp-atpcursos-staging.cronogramaatp.com.br/*`. Preservar o wildcard dos outros projetos.
+- **Cloudflare Access:** aplicações independentes `ATPCursos Staging Admin` e `ATPCursos MCP Staging Owner`, ambas com política de proprietário único. A identidade/allowlist não deve aparecer neste repositório público.
+- **Resend:** domínio `atpcursos.cronogramaatp.com.br` verificado na região `sa-east-1`. DKIM TXT, SPF TXT, MX e CNAME necessários foram aplicados na zona Cloudflare e confirmados pelo Resend. Não modificar o domínio de envio preexistente de outro projeto.
+- **Gate de secrets BLOCKED:** a tentativa de gravar os segredos na Pages via conexão atual foi bloqueada pelas configurações de segurança da plataforma; nenhuma credencial foi aplicada por essa tentativa. Não contornar, não commitar chaves e não copiar segredos de outras aplicações.
+- **Ambientes Pages:** loja e MCP ainda têm apenas `ENVIRONMENT=staging` e bindings D1/R2. Faltam, pelo canal administrativo autorizado: `ACCESS_TEAM_DOMAIN`, `ACCESS_AUD`, `ADMIN_ALLOWED_EMAILS`, `BUYER_HASH_KEY`, `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `PUBLIC_BASE_URL` e os parâmetros comerciais da InfinitePay. Configurar separadamente no Worker MCP (Access/AUD do MCP e permissões de desenvolvedor).
+- **Não concluído:** envio transacional real, checkout pago/reembolso, PDF comprado entregue, login após Access no app e OAuth do MCP em outra conta ChatGPT. Um status 200 no staging NÃO valida essas operações.
+- CI/QA: 21 testes loja, 4 testes MCP, build Pages de ambos e migrações 0001–0003 validados. **Quality Gate global: PARTIAL**. PR continua draft e produção/cobrança continuam desativadas.
