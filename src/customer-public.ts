@@ -18,10 +18,18 @@ export async function login(req:Request,env:Env){
  const email=typeof body.email==="string"?normalizeEmail(body.email):"";
  const password=typeof body.password==="string"?body.password:"";
  if(!validEmail(email)||!validPassword(password))return json({error:"Credenciais inválidas"},401);
+ if(!env.BUYER_HASH_KEY)return json({error:"Configuração de acesso pendente"},503);
+ // Five password attempts per recipient address per 15-minute rolling window.
+ const identifier=await emailHash(email,env.BUYER_HASH_KEY),timestamp=now();
+ await env.DB.prepare("INSERT INTO customer_login_limits(email_hash,window_start,attempts) VALUES(?,?,1) ON CONFLICT(email_hash) DO UPDATE SET window_start=CASE WHEN window_start<? THEN excluded.window_start ELSE window_start END, attempts=CASE WHEN window_start<? THEN 1 ELSE attempts+1 END")
+ .bind(identifier,timestamp,timestamp-900,timestamp-900).run();
+ const throttle=await env.DB.prepare("SELECT attempts FROM customer_login_limits WHERE email_hash=?").bind(identifier).first<{attempts:number}>();
+ if((throttle?.attempts||0)>5)return json({error:"Muitas tentativas; aguarde 15 minutos"},429);
  const record=await env.DB.prepare("SELECT id,password_salt,password_digest,password_iterations FROM customers WHERE email=? COLLATE NOCASE AND status='active'").bind(email)
   .first<{id:string;password_salt:string|null;password_digest:string|null;password_iterations:number|null}>();
  if(!record?.password_salt||!record.password_digest||!record.password_iterations||
   !(await passwordMatch(password,record.password_salt,record.password_digest,record.password_iterations)))return json({error:"Credenciais inválidas"},401);
+ await env.DB.prepare("DELETE FROM customer_login_limits WHERE email_hash=?").bind(identifier).run();
  const secret=newSecret(),hash=await secretHash(secret);
  await env.DB.prepare("INSERT INTO customer_sessions(token_hash,customer_id,expires_at) VALUES(?,?,?)")
  .bind(hash,record.id,now()+14*86400).run();
