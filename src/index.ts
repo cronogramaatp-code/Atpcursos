@@ -1,10 +1,12 @@
 import { Env, json,plain,html,readJSON,adminIdentity,originOK } from "./infra";
 import { storefront,productPage,myMaterials,adminPage,adminImport } from "./ui";
+import { clientJS } from "./client";
 import { quote,createCheckout,receiveWebhook,reconcile } from "./checkout";
 import { getDownload } from "./fulfillment";
 import { overview,adminProducts,uploadPDF,publishProduct,presence } from "./admin";
 async function route(req:Request,env:Env,ctx:ExecutionContext):Promise<Response>{
  const url=new URL(req.url),p=url.pathname,method=req.method;
+ if(p==="/app.js"&&method==="GET")return new Response(clientJS,{headers:{"content-type":"application/javascript; charset=utf-8","cache-control":"public, max-age=300","x-content-type-options":"nosniff"}});
  if(p==="/health")return json({service:"atpcursos",stage:env.ENVIRONMENT||"staging",ready:!!env.DB&&!!env.PDFS});
  if((p==="/"||p==="/loja")&&method==="GET")return html(storefront());
  if(p==="/meus-materiais"&&method==="GET")return html(myMaterials());
