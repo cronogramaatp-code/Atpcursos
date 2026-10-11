@@ -1,0 +1,10 @@
+{
+  "name": "atpcursos-staging",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-11",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
+  // Configure dedicated D1, R2 and Queues bindings only after staging resources have been approved.
+  // No production resources or shared bindings are inherited from Cronograma ATP.
+  "vars": { "ENVIRONMENT": "staging" }
+}
