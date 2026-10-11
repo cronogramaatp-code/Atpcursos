@@ -4,12 +4,17 @@ import { clientJS } from "./client";
 import { quote,createCheckout,receiveWebhook,reconcile } from "./checkout";
 import { getDownload } from "./fulfillment";
 import { overview,adminProducts,uploadPDF,publishProduct,presence } from "./admin";
+import { adminCustomersPage, confirmPage, customerMaterialsPage } from "./admin-customers-ui";
+import { listCustomers,createCustomer,grantCourtesy,getCourtesies,resendCourtesy,revokeCourtesy,changeEmailRequest,passwordResetRequest } from "./customer-admin";
+import { applyAction,courtesyDownload,courtesySessionDownload,login,logout,myAccount } from "./customer-public";
+
 async function route(req:Request,env:Env,ctx:ExecutionContext):Promise<Response>{
  const url=new URL(req.url),p=url.pathname,method=req.method;
  if(p==="/app.js"&&method==="GET")return new Response(clientJS,{headers:{"content-type":"application/javascript; charset=utf-8","cache-control":"public, max-age=300","x-content-type-options":"nosniff"}});
  if(p==="/health")return json({service:"atpcursos",stage:env.ENVIRONMENT||"staging",ready:!!env.DB&&!!env.PDFS});
  if((p==="/"||p==="/loja")&&method==="GET")return html(storefront());
- if(p==="/meus-materiais"&&method==="GET")return html(myMaterials());
+ if(p==="/meus-materiais"&&method==="GET")return html(customerMaterialsPage());
+ if(p==="/confirmar"&&method==="GET")return html(confirmPage());
  if(p.startsWith("/produto/")&&method==="GET")return html(productPage(decodeURIComponent(p.slice(9))));
  if(!env.DB||!env.PDFS)return json({error:"Banco e R2 ainda não configurados"},503);
  let adminEmail:string|null=null;
@@ -21,6 +26,7 @@ async function route(req:Request,env:Env,ctx:ExecutionContext):Promise<Response>
  }
  if((p==="/adm"||p==="/adm/")&&method==="GET")return html(adminPage());
  if(p==="/adm/produtos"&&method==="GET")return html(adminImport());
+ if(p==="/adm/alunos"&&method==="GET")return html(adminCustomersPage());
  if(["POST","PUT","PATCH","DELETE"].includes(method)&&p!=="/api/webhooks/infinitepay"&&!originOK(req))
   return json({error:"Origem não permitida"},403);
  if(p==="/api/products"&&method==="GET"){
@@ -59,6 +65,30 @@ async function route(req:Request,env:Env,ctx:ExecutionContext):Promise<Response>
  if(up&&method==="PUT")return uploadPDF(req,env,up[1]);
  const pub=p.match(/^\/api\/admin\/products\/([a-f0-9-]{36})\/publish$/i);
  if(pub&&method==="POST")return publishProduct(env,pub[1],adminEmail||"");
+
+ // Courtesy, optional student accounts and administrative identity changes.
+ if(p==="/api/admin/customers"&&method==="GET")return listCustomers(env,url.searchParams.get("q")||"");
+ if(p==="/api/admin/customers"&&method==="POST")return createCustomer(req,env,adminEmail!);
+ const customerGrant=p.match(/^\/api\/admin\/customers\/([a-f0-9-]{36})\/courtesies$/i);
+ if(customerGrant&&method==="POST")return grantCourtesy(req,env,adminEmail!,customerGrant[1]);
+ if(customerGrant&&method==="GET")return getCourtesies(env,customerGrant[1]);
+ const emailChange=p.match(/^\/api\/admin\/customers\/([a-f0-9-]{36})\/email-change$/i);
+ if(emailChange&&method==="POST")return changeEmailRequest(req,env,adminEmail!,emailChange[1]);
+ const resetPass=p.match(/^\/api\/admin\/customers\/([a-f0-9-]{36})\/reset-password$/i);
+ if(resetPass&&method==="POST")return passwordResetRequest(env,adminEmail!,resetPass[1]);
+ const resendGrant=p.match(/^\/api\/admin\/courtesies\/([a-f0-9-]{36})\/resend$/i);
+ if(resendGrant&&method==="POST")return resendCourtesy(env,adminEmail!,resendGrant[1]);
+ const revokeGrant=p.match(/^\/api\/admin\/courtesies\/([a-f0-9-]{36})\/revoke$/i);
+ if(revokeGrant&&method==="POST")return revokeCourtesy(env,adminEmail!,revokeGrant[1]);
+ if(p==="/api/customer/login"&&method==="POST")return login(req,env);
+ if(p==="/api/customer/logout"&&method==="POST")return logout(req,env);
+ if(p==="/api/customer/me"&&method==="GET")return myAccount(req,env);
+ const accountAction=p.match(/^\/api\/customer\/action\/(password_reset|email_change)$/);
+ if(accountAction&&method==="POST")return applyAction(req,env,accountAction[1]);
+ const owned=p.match(/^\/api\/customer\/courtesies\/([a-f0-9-]{36})\/download$/i);
+ if(owned&&method==="GET")return courtesySessionDownload(req,env,owned[1]);
+ if(p.startsWith("/api/courtesy/")&&method==="GET")return courtesyDownload(env,p.slice("/api/courtesy/".length));
+ 
  return json({error:"Rota não encontrada"},404);
 }
 export default {
