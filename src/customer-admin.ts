@@ -43,14 +43,22 @@ export async function grantCourtesy(req:Request,env:Env,actor:string,id:string){
  if(days!==null&&days!==undefined&&(!Number.isSafeInteger(days)||Number(days)<1||Number(days)>366))return json({error:"Validade permitida: de 1 a 366 dias"},422);
  const expiry=days==null?null:now()+Number(days)*86400;
  if(!validCourtesyExpiry(expiry,now()))return json({error:"Validade inválida"},422);
- const idGrant=uuid();
- try{
+ let grantId=uuid();
+ const oldGrant=await env.DB.prepare("SELECT id,status,expires_at FROM courtesy_grants WHERE customer_id=? AND product_id=?")
+  .bind(id,productId).first<{id:string;status:string;expires_at:number|null}>();
+ if(oldGrant){
+  if(oldGrant.status==="active"&&(oldGrant.expires_at===null||oldGrant.expires_at>now()))
+   return json({error:"Este PDF já tem cortesia ativa; utilize o reenvio"},409);
+  grantId=oldGrant.id;
+  await env.DB.prepare("UPDATE courtesy_grants SET status='active',expires_at=?,reason=?,granted_by=? WHERE id=?")
+   .bind(expiry,reason,actor,grantId).run();
+ }else{
   await env.DB.prepare("INSERT INTO courtesy_grants(id,customer_id,product_id,granted_by,reason,expires_at) VALUES(?,?,?,?,?,?)")
-   .bind(idGrant,id,productId,actor,reason,expiry).run();
- }catch{return json({error:"Este PDF já foi concedido ao aluno; use reenvio ou revogação"},409);}
- await audit(env,actor,"courtesy_granted",idGrant);
- const issued=await issueCourtesy(env,idGrant,customerRecord,prod.title);
- return json({id:idGrant,status:"active",emailSent:issued},201);
+   .bind(grantId,id,productId,actor,reason,expiry).run();
+ }
+ await audit(env,actor,"courtesy_granted",grantId);
+ const issued=await issueCourtesy(env,grantId,customerRecord,prod.title);
+ return json({id:grantId,status:"active",emailSent:issued},201);
 }
 export async function issueCourtesy(env:Env,grantId:string,c?:Customer,title?:string):Promise<boolean>{
  const row=await env.DB.prepare("SELECT g.id,g.status,g.expires_at,p.title,c.id AS customer_id,c.email,c.full_name FROM courtesy_grants g JOIN customers c ON c.id=g.customer_id JOIN products p ON p.id=g.product_id WHERE g.id=? AND p.status='published'").bind(grantId).first<{id:string;status:string;expires_at:number|null;title:string;customer_id:string;email:string;full_name:string}>();
