@@ -62,7 +62,19 @@ export async function confirmPayment(env:Env,id:string,transaction:string,slug:s
  if(j.success!==true||j.paid!==true||j.amount!==order.total_cents)return false;
  const update=await env.DB.prepare("UPDATE orders SET status='paid',transaction_nsu=?,paid_at=CURRENT_TIMESTAMP WHERE id=? AND status='pending'")
   .bind(transaction,id).run();
- return (update.meta?.changes||0)===1;
+ if((update.meta?.changes||0)!==1)return false;
+ // Register verified buyers as students without requiring an account password.
+ // Password creation is always an email-confirmed optional action.
+ try{
+  const buyer=await env.DB.prepare("SELECT buyer_name,buyer_email,buyer_email_hash FROM orders WHERE id=?")
+   .bind(id).first<{buyer_name:string;buyer_email:string;buyer_email_hash:string}>();
+  if(buyer)await env.DB.prepare("INSERT OR IGNORE INTO customers(id,full_name,email,email_hash) VALUES(?,?,?,?)")
+   .bind(uuid(),buyer.buyer_name,buyer.buyer_email,buyer.buyer_email_hash).run();
+ }catch{
+  // A transient account-provisioning failure must not invalidate verified payment.
+  // Reconciliation may backfill after recovery.
+ }
+ return true;
 }
 export async function receiveWebhook(req:Request,env:Env,ctx:ExecutionContext){
  const d=await readJSON(req,8192);
