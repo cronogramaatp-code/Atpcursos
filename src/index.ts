@@ -12,10 +12,10 @@ async function route(req:Request,env:Env,ctx:ExecutionContext):Promise<Response>
  const url=new URL(req.url),p=url.pathname,method=req.method;
  if(p==="/app.js"&&method==="GET")return new Response(clientJS,{headers:{"content-type":"application/javascript; charset=utf-8","cache-control":"public, max-age=300","x-content-type-options":"nosniff"}});
  if(p==="/health")return json({service:"atpcursos",stage:env.ENVIRONMENT||"staging",ready:!!env.DB&&!!env.PDFS});
- if((p==="/"||p==="/loja")&&method==="GET")return html(storefront());
- if(p==="/meus-materiais"&&method==="GET")return html(customerMaterialsPage());
- if(p==="/confirmar"&&method==="GET")return html(confirmPage());
- if(p.startsWith("/produto/")&&method==="GET")return html(productPage(decodeURIComponent(p.slice(9))));
+ if((p==="/"||p==="/loja")&&method==="GET")return html(storefront(),req);
+ if(p==="/meus-materiais"&&method==="GET")return html(customerMaterialsPage(),req);
+ if(p==="/confirmar"&&method==="GET")return html(confirmPage(),req);
+ if(p.startsWith("/produto/")&&method==="GET")return html(productPage(decodeURIComponent(p.slice(9))),req);
  if(!env.DB||!env.PDFS)return json({error:"Banco e R2 ainda não configurados"},503);
  let adminEmail:string|null=null;
  if(p==="/adm"||p.startsWith("/adm/")||p.startsWith("/api/admin/")){
@@ -24,9 +24,9 @@ async function route(req:Request,env:Env,ctx:ExecutionContext):Promise<Response>
   adminEmail=await adminIdentity(req,env);
   if(!adminEmail)return plain("Acesso negado",403);
  }
- if((p==="/adm"||p==="/adm/")&&method==="GET")return html(adminPage());
- if(p==="/adm/produtos"&&method==="GET")return html(adminImport());
- if(p==="/adm/alunos"&&method==="GET")return html(adminCustomersPage());
+ if((p==="/adm"||p==="/adm/")&&method==="GET")return html(adminPage(),req);
+ if(p==="/adm/produtos"&&method==="GET")return html(adminImport(),req);
+ if(p==="/adm/alunos"&&method==="GET")return html(adminCustomersPage(),req);
  if(["POST","PUT","PATCH","DELETE"].includes(method)&&p!=="/api/webhooks/infinitepay"&&!originOK(req))
   return json({error:"Origem não permitida"},403);
  if(p==="/api/products"&&method==="GET"){

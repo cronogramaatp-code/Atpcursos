@@ -1,7 +1,7 @@
 import { layout } from "./ui";
 export function adminCustomersPage(){
 return layout(`
-<div class="admin"><aside class="side"><b>Admin ATPCursos</b><a href="/adm">Dashboard</a><a href="/adm/produtos">Importar PDFs</a><a href="/adm/alunos">Alunos e cortesias</a></aside>
+<div class="admin"><aside class="side"><div class="side-brand"><img src="/brand/logo-atp.png" alt="Logo ATPCursos" width="45" height="45">Admin ATPCursos</div><a href="/adm">Dashboard</a><a href="/adm/produtos">Importar PDFs</a><a href="/adm/alunos">Alunos e cortesias</a></aside>
 <section><h1>Alunos e cortesias</h1><p class="muted">Cortesias não entram na receita. A alteração do e-mail e da senha é confirmada pelo destinatário.</p>
 <div class="card"><h2>Cadastrar aluno</h2><form id="register"><label>Nome completo<input name="name" required maxlength="120"></label><label>E-mail<input name="email" type="email" required maxlength="254"></label><button class="btn">Cadastrar</button></form></div>
 <h2>Pesquisar alunos</h2><div class="toolbar"><input id="filter" placeholder="Nome ou e-mail"><button id="refresh" class="btn">Pesquisar</button></div>

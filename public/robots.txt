@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /loja
+Allow: /produto/
+Disallow: /adm
+Disallow: /api/
+Disallow: /meus-materiais
+Disallow: /confirmar

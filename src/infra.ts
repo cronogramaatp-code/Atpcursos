@@ -9,7 +9,11 @@ export const uuid=()=>crypto.randomUUID();
 export const now=()=>Math.floor(Date.now()/1000);
 export const json=(data:unknown,status=200)=>new Response(JSON.stringify(data),{status,headers:{"content-type":"application/json; charset=utf-8","cache-control":"private, no-store","x-content-type-options":"nosniff"}});
 export const plain=(s:string,status=200)=>new Response(s,{status,headers:{"content-type":"text/plain; charset=utf-8","cache-control":"no-store"}});
-export const html=(s:string)=>new Response(s,{headers:{"content-type":"text/html; charset=utf-8","cache-control":"no-store","referrer-policy":"no-referrer","x-content-type-options":"nosniff","x-frame-options":"DENY"}});
+export const html=(s:string,req?:Request)=>{
+ const url=req?new URL(req.url):null;
+ const body=s.replaceAll("__ORIGIN__",url?.origin||"").replaceAll("__PAGE_URL__",url?url.origin+url.pathname:"");
+ return new Response(body,{headers:{"content-type":"text/html; charset=utf-8","cache-control":"no-store","referrer-policy":"no-referrer","x-content-type-options":"nosniff","x-frame-options":"DENY"}});
+};
 export const moneyOK=(n:unknown):n is number=>Number.isSafeInteger(n)&&Number(n)>=100&&Number(n)<=20_000_000;
 export const emailOK=(e:string)=>e.length>=5&&e.length<=254&&/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
 export function originOK(req:Request){const origin=req.headers.get("origin");return !origin||origin===new URL(req.url).origin;}
