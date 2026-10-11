@@ -43,7 +43,7 @@ export async function grantCourtesy(req:Request,env:Env,actor:string,id:string){
  if(days!==null&&days!==undefined&&(!Number.isSafeInteger(days)||Number(days)<1||Number(days)>366))return json({error:"Validade permitida: de 1 a 366 dias"},422);
  const expiry=days==null?null:now()+Number(days)*86400;
  if(!validCourtesyExpiry(expiry,now()))return json({error:"Validade inválida"},422);
- let grantId=uuid();
+ let grantId:string=uuid();
  const oldGrant=await env.DB.prepare("SELECT id,status,expires_at FROM courtesy_grants WHERE customer_id=? AND product_id=?")
   .bind(id,productId).first<{id:string;status:string;expires_at:number|null}>();
  if(oldGrant){
