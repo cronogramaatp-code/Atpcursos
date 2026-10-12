@@ -28,3 +28,12 @@ Na consulta de 12/10/2026, a conexão Cloudflare disponível ao assistente não 
 - Código e testes automatizados: auditar por commit e execução CI específica.
 - Staging com schema e uploads reais: **BLOCKED** até migração verificada e ambiente autenticado.
 - Produção comercial: **BLOCKED** até QA, validação de cobrança/entrega e aprovação de deploy.
+
+## Verificações adicionais de homologação — 12/10/2026
+- Cloudflare Pages `atpcursos-staging` recebeu as variáveis `ACCESS_TEAM_DOMAIN`, `ACCESS_AUD` e `ADMIN_ALLOWED_EMAILS` nas configurações de preview e production **do projeto de homologação**; nenhuma alteração no projeto Pages de produção.
+- Aplicação Cloudflare Access `ATPCursos Staging Admin` já protege `/adm`, `/adm/*` e `/api/admin/*` no domínio `staging-atpcursos.cronogramaatp.com.br`; sessão de administrador exige JWT verificado no backend.
+- D1 staging: cinco tabelas de multi-PDF já presentes; bucket R2 `atpcursos-staging-pdfs` identificado.
+- QA isolado em máquina de desenvolvimento: 41/41 testes automatizados e 11/11 verificações integradas simuladas PASS para inclusão de dois PDFs, catálogo, bloqueios, personalização, tokens de download e idempotência, sem cobrança/e-mail real.
+- A rota `/health` de Pages staging responde 200 com `ready:true`. Cloudflare Pages é a plataforma de deploy; ausência do nome em Workers Scripts não constitui ausência de implantação.
+- **PENDENTE / NÃO LIBERAR PRODUÇÃO:** uma nova publicação de staging para incorporar env vars, autenticação administrativa real, upload E2E com PDFs no R2 staging, validação de falhas parciais e da infraestrutura de reprocessamento, verificação de checkout/entrega financeira e Quality Gate PASS.
+- Esta atualização é documentação de QA para disparar o pipeline da branch de homologação. Não habilitar checkout real na homologação.
