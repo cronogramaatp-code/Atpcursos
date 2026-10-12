@@ -37,15 +37,25 @@ async function route(req:Request,env:Env,ctx:ExecutionContext):Promise<Response>
  if(["POST","PUT","PATCH","DELETE"].includes(method)&&p!=="/api/webhooks/infinitepay"&&!originOK(req))
   return json({error:"Origem não permitida"},403);
  if(p==="/api/products"&&method==="GET"){
-  const data=await env.DB.prepare("SELECT id,slug,title,category,discipline,contest,description,price_cents,page_count,(SELECT COUNT(*) FROM product_files f WHERE f.product_id=products.id) AS file_count FROM products WHERE status='published' ORDER BY created_at DESC LIMIT 100").all();
+  const schema=await env.DB.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='product_files'").first();
+  const query=schema
+   ?"SELECT id,slug,title,category,discipline,contest,description,price_cents,page_count,(SELECT COUNT(*) FROM product_files f WHERE f.product_id=products.id) AS file_count FROM products WHERE status='published' ORDER BY created_at DESC LIMIT 100"
+   :"SELECT id,slug,title,category,discipline,contest,description,price_cents,page_count,CASE WHEN original_key IS NULL THEN 0 ELSE 1 END AS file_count FROM products WHERE status='published' ORDER BY created_at DESC LIMIT 100";
+  const data=await env.DB.prepare(query).all();
   return json({products:data.results});
  }
  if(p.startsWith("/api/products/")&&method==="GET"){
   const slug=decodeURIComponent(p.slice("/api/products/".length));
-  const product=await env.DB.prepare("SELECT id,slug,title,category,discipline,contest,description,price_cents,page_count,(SELECT COUNT(*) FROM product_files f WHERE f.product_id=products.id) AS file_count FROM products WHERE slug=? AND status='published'").bind(slug).first<{id:string}>();
+  const schema=await env.DB.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='product_files'").first();
+  const query=schema
+   ?"SELECT id,slug,title,category,discipline,contest,description,price_cents,page_count,(SELECT COUNT(*) FROM product_files f WHERE f.product_id=products.id) AS file_count FROM products WHERE slug=? AND status='published'"
+   :"SELECT id,slug,title,category,discipline,contest,description,price_cents,page_count,CASE WHEN original_key IS NULL THEN 0 ELSE 1 END AS file_count FROM products WHERE slug=? AND status='published'";
+  const product=await env.DB.prepare(query).bind(slug).first<{id:string;title:string;page_count:number}>();
   if(!product)return json({error:"Produto não encontrado"},404);
-  const files=await env.DB.prepare("SELECT title,page_count FROM product_files WHERE product_id=? ORDER BY position,created_at,id").bind(product.id).all();
-  return json({product:{...product,files:files.results}});
+  const files=schema
+   ?(await env.DB.prepare("SELECT title,page_count FROM product_files WHERE product_id=? ORDER BY position,created_at,id").bind(product.id).all()).results
+   :[{title:product.title,page_count:product.page_count}];
+  return json({product:{...product,files}});
  }
  if(p==="/api/recommendations"&&method==="GET"){
   const id=url.searchParams.get("product")||"";
