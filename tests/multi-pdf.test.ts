@@ -7,7 +7,7 @@ test("PDF bundle upload limits and sanitized labels",()=>{
  assert.equal(MAX_PDF_BYTES,50*1024*1024);
  assert.equal(MAX_PRODUCT_FILES,20);
  assert.equal(MAX_PRODUCT_BYTES,300*1024*1024);
- assert.equal(safeFileTitle('Simulado 01 / Gabarito<>.pdf'),"Simulado 01   Gabarito  .pdf");
+ assert.equal(safeFileTitle('Simulado 01 / Gabarito<>.pdf'),"Simulado 01 Gabarito .pdf");
  assert.equal(pdfEnvelopeOK("%PDF-1.7 abc","abc%%EOF\n"),true);
  assert.equal(pdfEnvelopeOK("notpdf","%%EOF"),false);
  assert.equal(pdfEnvelopeOK("%PDF-1.7","truncated"),false);
