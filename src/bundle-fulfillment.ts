@@ -19,10 +19,8 @@ export async function fulfillBundleOrder(env:Env,orderId:string):Promise<boolean
  const snapshots=await env.DB.prepare("SELECT f.id,f.title_snapshot,f.original_key_snapshot FROM order_item_files f JOIN order_items i ON i.id=f.order_item_id WHERE i.order_id=? ORDER BY i.id,f.position")
   .bind(orderId).all<Snapshot>();
  if(!snapshots.results.length)return true;
- // Avoid doing all expensive PDF transformations in one Worker invocation.
- let processed=0;
+ // Complete every file in the order; partial failures remain retryable.
  for(const f of snapshots.results){
-  if(processed>=2)break;
   await env.DB.prepare("INSERT OR IGNORE INTO bundle_deliveries(id,order_item_file_id,order_id,status) VALUES(?,?,?,'pending')")
    .bind(uuid(),f.id,orderId).run();
   const delivery=await env.DB.prepare("SELECT id,status,personalized_key FROM bundle_deliveries WHERE order_item_file_id=?")
@@ -31,7 +29,6 @@ export async function fulfillBundleOrder(env:Env,orderId:string):Promise<boolean
   const claim=await env.DB.prepare("UPDATE bundle_deliveries SET status='processing',updated_at=CURRENT_TIMESTAMP WHERE id=? AND (status IN ('pending','error') OR (status='processing' AND updated_at<datetime('now','-10 minutes')))")
    .bind(delivery.id).run();
   if((claim.meta?.changes||0)!==1)continue;
-  processed++;
   try{
    const raw=await env.PDFS.get(f.original_key_snapshot);
    if(!raw||raw.size>MAX_PDF_BYTES)throw Error("PDF_UNAVAILABLE");
