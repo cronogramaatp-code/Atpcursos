@@ -8,7 +8,7 @@
 - Migração aditiva `0005_multi_pdf_bundles.sql`: `product_files`, `order_item_files`, `bundle_deliveries`, `bundle_download_tokens`, `bundle_notifications`; retrocompatibilidade com originais legados.
 - Checkout: snapshots imutáveis de cada arquivo da compra, evitando que alterações futuras modifiquem os materiais de um pedido.
 - Pós-pagamento verificado: marca d'água em cada arquivo; entrega de links individuais em e-mail único por pedido; tokens de 72 horas / cinco downloads, sem PDF original público.
-- Processamento limita a dois PDFs por execução e continua por reconciliação periódica.
+- Processamento tenta concluir os PDFs do pedido na mesma execução. **Bloqueio de escala:** em Cloudflare Pages a exportação de handler `scheduled` não prova execução de cron; homologar lotes grandes e provisionar reprocessamento confiável com Queue/Worker cron antes de ativar venda comercial de combos grandes. PDFs extensos podem ultrapassar o tempo/memória de execução.
 - Catálogo é compatível com banco sem a migração; upload/publicação ficam bloqueados nesse caso.
 
 ## Dependências e bloqueios de implantação
