@@ -73,9 +73,9 @@ async function route(req:Request,env:Env,ctx:ExecutionContext):Promise<Response>
  if(p==="/api/admin/products"&&(method==="GET"||method==="POST"))return adminProducts(req,env);
  const up=p.match(/^\/api\/admin\/products\/([a-f0-9-]{36})\/upload$/i);
  if(up&&method==="PUT")return appendProductPDF(req,env,up[1]);
- const pf=p.match(/^\\/api\\/admin\\/products\\/([a-f0-9-]{36})\\/files$/i);
+ const pf=p.match(/^\/api\/admin\/products\/([a-f0-9-]{36})\/files$/i);
  if(pf&&method==="GET")return productFiles(env,pf[1]);
- const df=p.match(/^\\/api\\/admin\\/products\\/([a-f0-9-]{36})\\/files\\/([a-f0-9-]{36})$/i);
+ const df=p.match(/^\/api\/admin\/products\/([a-f0-9-]{36})\/files\/([a-f0-9-]{36})$/i);
  if(df&&method==="DELETE")return removeProductPDF(env,df[1],df[2]);
  const pub=p.match(/^\/api\/admin\/products\/([a-f0-9-]{36})\/publish$/i);
  if(pub&&method==="POST")return publishProduct(env,pub[1],adminEmail||"");
