@@ -116,5 +116,8 @@ header{border-bottom:1px solid #4a3828}nav .brand em{color:var(--sand)}
 footer{background:#171512;color:#dbc6a8}
 footer a{color:#f7dcae}
 @media(max-width:740px){.feature-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.feature-grid .feature{min-height:160px}}
+.nav .brand img,.side-brand img{filter:drop-shadow(0 2px 5px #ee701e55)}
+.kpis .card:has(strong){border-top:3px solid #ee701e}
+.kpis .card strong{overflow-wrap:anywhere}
 @media(max-width:460px){.feature-grid{grid-template-columns:1fr}.feature-grid .feature{min-height:auto}.market-hero,.sales-hero{padding:28px 21px}.hero-orbit{width:min(100%,210px)}}
 `;
