@@ -25,7 +25,7 @@ test("PWA manifest references real icons, including maskable",()=>{
  }
 });
 test("logo, favicons and OG share preview exist",()=>{
- for(const p of ["brand/logo-atp.png","brand/favicon.ico","brand/favicon-32.png","brand/apple-touch-icon.png","brand/og-atpcursos.jpg","sw.js"]){
+ for(const p of ["brand/logo-atp.png","brand/wordmark-atpcursos.png","brand/favicon.ico","brand/favicon-32.png","brand/apple-touch-icon.png","brand/og-atpcursos.jpg","sw.js"]){
   assert.ok(existsSync(file(p)),p+" missing");
  }
  const apple=readFileSync(file("brand/apple-touch-icon.png"));
@@ -38,7 +38,7 @@ test("all important app HTML pages reference real logo and absolute social URLs"
   const r=await worker.fetch(new Request("https://atpcursos.example"+p),{} as any,{} as any);
   const html=await r.text();
   assert.equal(r.status,200);
-  assert.match(html,/\/brand\/logo-atp\.png/);
+  assert.match(html,/\/brand\/wordmark-atpcursos\.png/);
   assert.match(html,/\/manifest\.webmanifest/);
   assert.match(html,/\/brand\/favicon\.ico/);
   assert.match(html,/https:\/\/atpcursos\.example\/brand\/og-atpcursos\.jpg/);
@@ -52,4 +52,25 @@ test("PWA service worker cannot cache PDFs, orders or admin routes",()=>{
  assert.match(js,/if\(!isPublicAsset\(p\)\)return/);
  assert.ok(!js.includes("cache.put(req"));
  assert.match(js,/try\{return await fetchFresh\}catch/);
+});
+test("new header lockup is transparent and sized for the navbar",()=>{
+ const png=readFileSync(file("brand/wordmark-atpcursos.png"));
+ assert.equal(png.subarray(1,4).toString("ascii"),"PNG");
+ assert.ok(width(png)>900&&height(png)>250);
+ assert.equal(png[25],6,"PNG must use RGBA to avoid a background rectangle");
+});
+test("amber logo preserves original source privately and regenerates all sharing assets",()=>{
+ const source=join(root,"assets","brand","logo-atp-original.png");
+ assert.ok(existsSync(source),"the original emblem must remain recoverable");
+ assert.ok(!existsSync(file("brand/logo-atp-original.png")),"the original should not be publicly exposed");
+ assert.notDeepEqual(readFileSync(source),readFileSync(file("brand/logo-atp.png")),"the premium logo should be recolored");
+ const manifest=JSON.parse(readFileSync(file("manifest.webmanifest"),"utf8"));
+ assert.equal(manifest.theme_color,"#171512");
+ assert.equal(manifest.background_color,"#F8F3EA");
+ const workerScript=readFileSync(file("sw.js"),"utf8");
+ assert.match(workerScript,/atpcursos-public-amber-v3/,"service worker must expire old logo cache");
+ for(const path of ["brand/logo-atp.png","brand/favicon-16.png","brand/favicon-32.png","brand/favicon-48.png","brand/icon-192.png","brand/icon-512.png","brand/icon-512-maskable.png"]){
+  const image=readFileSync(file(path));
+  assert.equal(image.subarray(1,4).toString("ascii"),"PNG");
+ }
 });
