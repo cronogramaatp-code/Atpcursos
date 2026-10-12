@@ -12,8 +12,12 @@ export async function overview(env:Env){
 const clean=(x:unknown,max:number)=>typeof x==="string"?x.trim().slice(0,max):"";
 export async function adminProducts(req:Request,env:Env){
  if(req.method==="GET"){
-  const r=await env.DB.prepare("SELECT id,slug,title,category,price_cents,status,page_count,(SELECT COUNT(*) FROM product_files f WHERE f.product_id=products.id) AS file_count FROM products ORDER BY created_at DESC LIMIT 100").all();
-  return json({products:r.results});
+  const schema=await env.DB.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='product_files'").first();
+  const q=schema
+   ?"SELECT id,slug,title,category,price_cents,status,page_count,(SELECT COUNT(*) FROM product_files f WHERE f.product_id=products.id) AS file_count FROM products ORDER BY created_at DESC LIMIT 100"
+   :"SELECT id,slug,title,category,price_cents,status,page_count,CASE WHEN original_key IS NULL THEN 0 ELSE 1 END AS file_count FROM products ORDER BY created_at DESC LIMIT 100";
+  const r=await env.DB.prepare(q).all();
+  return json({products:r.results,multiPdfReady:!!schema});
  }
  const d=await readJSON(req);
  const title=clean(d.title,141),category=clean(d.category,30),price=d.priceCents;
@@ -25,6 +29,8 @@ export async function adminProducts(req:Request,env:Env){
  return json({id,status:"draft"},201);
 }
 export async function publishProduct(env:Env,id:string,adminEmail:string){
+ const schema=await env.DB.prepare("SELECT name FROM sqlite_master WHERE type=\'table\' AND name=\'product_files\'").first();
+ if(!schema)return json({error:"Atualização do banco ainda não aplicada neste ambiente"},503);
  const product=await env.DB.prepare("SELECT status FROM products WHERE id=?").bind(id).first<{status:string}>();
  if(!product||product.status!=="draft")return json({error:"Produto não está em rascunho"},409);
  const files=await env.DB.prepare("SELECT original_key FROM product_files WHERE product_id=? ORDER BY position,created_at,id LIMIT 21")
