@@ -53,3 +53,18 @@ test("PWA service worker cannot cache PDFs, orders or admin routes",()=>{
  assert.ok(!js.includes("cache.put(req"));
  assert.match(js,/try\{return await fetchFresh\}catch/);
 });
+test("amber logo preserves original source privately and regenerates all sharing assets",()=>{
+ const source=join(root,"assets","brand","logo-atp-original.png");
+ assert.ok(existsSync(source),"the original emblem must remain recoverable");
+ assert.ok(!existsSync(file("brand/logo-atp-original.png")),"the original should not be publicly exposed");
+ assert.notDeepEqual(readFileSync(source),readFileSync(file("brand/logo-atp.png")),"the premium logo should be recolored");
+ const manifest=JSON.parse(readFileSync(file("manifest.webmanifest"),"utf8"));
+ assert.equal(manifest.theme_color,"#171512");
+ assert.equal(manifest.background_color,"#F8F3EA");
+ const workerScript=readFileSync(file("sw.js"),"utf8");
+ assert.match(workerScript,/atpcursos-public-amber-v2/,"service worker must expire old logo cache");
+ for(const path of ["brand/logo-atp.png","brand/favicon-16.png","brand/favicon-32.png","brand/favicon-48.png","brand/icon-192.png","brand/icon-512.png","brand/icon-512-maskable.png"]){
+  const image=readFileSync(file(path));
+  assert.equal(image.subarray(1,4).toString("ascii"),"PNG");
+ }
+});
