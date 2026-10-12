@@ -64,7 +64,7 @@ test("multi-PDF draft can upload, list and remove independent originals",async()
  const productId="11111111-1111-4111-8111-111111111111";
  const upload=async(name:string)=>appendProductPDF(
   new Request("https://example.com/upload?name="+encodeURIComponent(name),{
-   method:"PUT",headers:{"content-type":"application/pdf","content-length":String(original.byteLength)},body:original
+   method:"PUT",headers:{"content-type":"application/pdf","content-length":String(original.byteLength)},body:original as unknown as BodyInit
   }),env,productId
  );
  assert.equal((await upload("Prova 01.pdf")).status,201);
