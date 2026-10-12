@@ -3,7 +3,7 @@
 Requires Pillow >=12. Run from repository root:
     python tools/build-amber-brand.py
 
-Input: public/brand/logo-atp-original.png (untouched approved emblem).
+Input: assets/brand/logo-atp-original.png (untouched approved emblem).
 Output: transparent logo, favicons, PWA icons, social preview.
 """
 from pathlib import Path
