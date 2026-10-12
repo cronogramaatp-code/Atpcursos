@@ -1,5 +1,6 @@
 import { Env, json,plain,html,readJSON,adminIdentity,originOK } from "./infra";
 import { storefront,productPage,myMaterials,adminPage,adminImport } from "./ui";
+import { salesPage, rotateOffer } from "./sales-pages";
 import { clientJS } from "./client";
 import { quote,createCheckout,receiveWebhook,reconcile } from "./checkout";
 import { getDownload } from "./fulfillment";
@@ -13,6 +14,9 @@ async function route(req:Request,env:Env,ctx:ExecutionContext):Promise<Response>
  if(method==="GET" && (p.startsWith("/brand/") || p.startsWith("/fonts/") || ["/manifest.webmanifest","/sw.js","/robots.txt","/favicon.ico"].includes(p)))return env.ASSETS.fetch(req);
  if(p==="/app.js"&&method==="GET")return new Response(clientJS,{headers:{"content-type":"application/javascript; charset=utf-8","cache-control":"public, max-age=300","x-content-type-options":"nosniff"}});
  if(p==="/health")return json({service:"atpcursos",stage:env.ENVIRONMENT||"staging",ready:!!env.DB&&!!env.PDFS});
+ if(p==="/ofertas"&&method==="GET")return rotateOffer(req);
+ const offer=new RegExp("^/oferta-0([1-4])$").exec(p);
+ if(method==="GET"&&offer)return html(salesPage(Number(offer[1])),req);
  if((p==="/"||p==="/loja")&&method==="GET")return html(storefront(),req);
  if(p==="/meus-materiais"&&method==="GET")return html(customerMaterialsPage(),req);
  if(p==="/confirmar"&&method==="GET")return html(confirmPage(),req);
