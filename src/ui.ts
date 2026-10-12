@@ -21,7 +21,7 @@ export const storefront = () => layout(`
  <div><span class="eyebrow">ATPCursos · Biblioteca digital</span><h1 id="home-title">PDFs para estudar cada etapa do seu concurso.</h1><p>Compare simulados, mapas mentais, cronogramas e apostilas. Confira conteúdo e preço antes de escolher seu PDF.</p>
  <div class="hero-actions"><a class="btn gold" href="#catalogo">Explorar materiais <span aria-hidden="true">↗</span></a><a class="btn ghost" href="/ofertas">Conhecer as ofertas</a></div>
  <div class="trust-row"><span>PDFs personalizados</span><span>Entrega por e-mail</span><span>Catálogo transparente</span></div></div>
- <div class="hero-visual"><div class="hero-orbit"><img src="/brand/logo-atp.png" width="235" height="235" alt="Emblema ATPCursos"></div><div class="hero-mini">Materiais para sua preparação</div></div>
+ <div class="hero-visual hero-thay"><img class="thay-avatar portrait" src="/brand/thay-avatar-portrait.webp?v=sem-letras-2" width="840" height="1078" alt="Avatar ilustrada da Thay com uniforme preto da área de segurança" decoding="async" fetchpriority="high"><div class="hero-mini">Materiais para sua preparação</div></div>
 </section>
 <div class="section-heading"><div><span class="eyebrow">Sua próxima revisão</span><h2>Escolha por disciplina, concurso ou formato</h2><p>Filtre por categoria e veja as informações de cada material disponível.</p></div></div>
 ${features}
@@ -42,7 +42,7 @@ export const myMaterials = () => layout('<div class="student-panel"><div class="
 
 const side = `<aside class="side" aria-label="Menu administrativo"><div class="side-brand"><img src="/brand/logo-atp.png" width="42" height="42" alt="Emblema ATPCursos"><span>ATPCursos<br>Central administrativa</span></div><a href="/adm">Visão geral</a><a href="/adm/produtos">Produtos e PDFs</a><a href="/adm/alunos">Alunos e cortesias</a><a href="/loja">Abrir loja ↗</a></aside>`;
 
-export const adminPage = () => layout(`<div class="admin">${side}<section><span class="eyebrow">Central de gestão</span><h1>Visão geral</h1><p class="muted">Acompanhe vendas verificadas, pedidos, descontos e presença. Os dados são atualizados a cada 60 segundos.</p>
+export const adminPage = () => layout(`<div class="admin">${side}<section><div class="admin-intro"><div><span class="eyebrow">Central de gestão</span><h1>Visão geral</h1><p class="muted">Acompanhe vendas verificadas, pedidos, descontos e presença. Os dados são atualizados a cada 60 segundos.</p></div><img src="/brand/thay-avatar-full.webp?v=sem-letras-2" alt="Avatar da Thay, personagem visual do ATPCursos" width="100" height="183" loading="lazy"></div>
 <div id="kpis" class="kpis" aria-live="polite"><article class="card"><span>Indicadores de vendas</span><strong>Carregando...</strong></article></div><div class="section-heading"><div><h2>Últimos pedidos</h2><p>Informações obtidas do banco oficial deste ambiente.</p></div></div><div class="card" style="overflow:auto"><table class="table"><thead><tr><th>Data</th><th>Pedido</th><th>Status</th><th>Valor</th></tr></thead><tbody id="orders"><tr><td colspan="4" class="muted">Aguardando os pedidos deste ambiente.</td></tr></tbody></table></div></section></div>`, "Admin", true);
 
 export const adminImport = () => layout(`<div class="admin">${side}<section><span class="eyebrow">Biblioteca digital</span><h1>Produtos e PDFs</h1><p class="muted">Cadastre cada material em rascunho. O arquivo original fica em armazenamento privado até a publicação controlada.</p>

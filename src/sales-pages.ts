@@ -25,7 +25,7 @@ export function salesPage(variant: number):string{
  <div><span class="eyebrow">${offer.label}</span><h1 id="offer-title">${offer.headline}</h1><p>${offer.subtitle}</p>
  <div class="hero-actions"><a class="btn gold" href="#catalogo">${offer.cta} →</a><a class="btn ghost" href="#como-funciona">Como funciona</a></div>
  <div class="trust-row"><span>PDF personalizado</span><span>Entrega digital</span><span>Preço claro</span></div></div>
- <div class="hero-visual"><div class="hero-orbit"><img src="/brand/logo-atp.png" width="225" height="225" alt="Emblema ATPCursos"></div><div class="hero-mini">${offer.note}</div></div>
+ <div class="hero-visual hero-thay"><img class="thay-avatar ${variant===1||variant===3?"portrait":"full"}" src="/brand/thay-avatar-${variant===1||variant===3?"portrait":"full"}.webp?v=sem-letras-2" width="${variant===1||variant===3?840:582}" height="${variant===1||variant===3?1078:1066}" alt="Avatar ilustrada da Thay em uniforme da área de segurança" decoding="async" fetchpriority="high"><div class="hero-mini">${offer.note}</div></div>
  </section>
  <section class="section-heading"><div><span class="eyebrow">ATPCursos · Materiais digitais</span><h2>${offer.title}</h2><p>${offer.intro}</p></div></section>
  <div class="feature-grid" aria-label="Vantagens"><div class="feature"><span class="feature-icon">01</span><h3>${offer.bullets[0]}</h3><p>Escolha de acordo com seus objetivos e as opções disponíveis.</p></div>
