@@ -16,7 +16,7 @@ test("four sales pages have different verified messages, shared identity and act
   assert.match(body,/id="q"/);
   assert.match(body,/id="tipo"/);
   assert.match(body,/href="#catalogo"/);
-  assert.match(body,/brand\/logo-atp\.png/);
+  assert.match(body,/brand\/wordmark-atpcursos\.png/);
   assert.match(body,/--night:#171512/);
   assert.doesNotMatch(body,/compra agora com 90%|aprovacao garantida/i);
   headings.push((body.match(/<h1 id="offer-title">([^<]+)<\/h1>/)||[])[1]||"");

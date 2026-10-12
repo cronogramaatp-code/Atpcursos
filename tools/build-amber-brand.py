@@ -35,14 +35,38 @@ if original.size != (512, 512):
 # The darkest recesses remain black, medium highlights shift to amber,
 # and upper specular highlights become sand. Keep the original alpha mask.
 gray = ImageOps.grayscale(original)
-tinted = ImageOps.colorize(gray, black=COAL, mid=C("#A65320"),
-                           white=C("#FFE4AD"), blackpoint=10,
+tinted = ImageOps.colorize(gray, black=COAL, mid=C("#EE701E"),
+                           white=C("#FFE1AD"), blackpoint=10,
                            whitepoint=245, midpoint=120)
 # Blend lightly to preserve the embossed detail of the official symbol.
-detail = Image.blend(original.convert("RGB"), tinted, 0.91)
+detail = Image.blend(original.convert("RGB"), tinted, 0.99)
 logo = detail.convert("RGBA")
 logo.putalpha(original.getchannel("A"))
+# Approved brand direction: warm metal relief, bright orange rim, cream highlights.
+ring = ImageDraw.Draw(logo)
+ring.ellipse((21, 21, 491, 491), outline=AMBER + (245,), width=7)
+ring.ellipse((33, 33, 479, 479), outline=SAND + (170,), width=3)
 logo.save(BRAND / "logo-atp.png", optimize=True)
+
+
+# Horizontal premium lockup (transparent) for the site navbar and marketing.
+# Preserve the brand's metallic emblem and render the approved orange/sand wordmark.
+font_path = "C:/Windows/Fonts/bahnschrift.ttf"
+if not Path(font_path).exists():
+    font_path = "C:/Windows/Fonts/arialbd.ttf"
+f = ImageFont.truetype(font_path, 185)
+word = Image.new("RGBA", (1390, 330), (0, 0, 0, 0))
+mark = logo.resize((296, 296), Image.Resampling.LANCZOS)
+word.alpha_composite(mark, (10, 17))
+wd = ImageDraw.Draw(word)
+wd.text((336, 74), "ATP", font=f, anchor="lt", fill=OAT + (255,))
+atp_length = wd.textlength("ATP", font=f)
+wd.text((336 + round(atp_length) - 8, 74), "Cursos", font=f, anchor="lt", fill=AMBER + (255,))
+# Crop only transparent margins without trimming anti-aliased glyphs.
+bbox = word.getbbox()
+if bbox:
+    word = word.crop((max(0,bbox[0]-10), max(0,bbox[1]-10), min(1390,bbox[2]+10), min(330,bbox[3]+10)))
+word.save(BRAND / "wordmark-atpcursos.png", optimize=True)
 
 def centered_icon(size: int, visual_ratio: float, bg=None):
     if bg is None:
@@ -85,8 +109,8 @@ def font(size, bold=False):
     return ImageFont.load_default()
 
 d.text((82, 75), "ESTUDE COM DIREÇÃO", fill=SAND, font=font(18, True))
-d.text((56, 171), "ATPCursos", font=font(78, True), fill=CREAM,
-       stroke_width=0)
+d.text((56, 171), "ATP", font=font(78, True), fill=OAT, stroke_width=0)
+d.text((56+round(d.textlength("ATP", font=font(78, True)))-3, 171), "Cursos", font=font(78, True), fill=AMBER, stroke_width=0)
 d.text((58, 277), "PDFs para concursos", font=font(46, True), fill=SAND)
 d.text((59, 352), "Simulados, mapas mentais e cronogramas", font=font(26), fill=OAT)
 d.text((59, 398), "Materiais digitais organizados em um só lugar.", font=font(23), fill=C("#C9BDAA"))

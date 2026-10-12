@@ -117,6 +117,9 @@ footer{background:#171512;color:#dbc6a8}
 footer a{color:#f7dcae}
 @media(max-width:740px){.feature-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.feature-grid .feature{min-height:160px}}
 .nav .brand img,.side-brand img{filter:drop-shadow(0 2px 5px #ee701e55)}
+nav .brand img.brand-lockup{display:block;width:clamp(175px,18vw,225px);height:auto;max-height:54px;object-fit:contain;object-position:left center}
+@media(max-width:740px){nav .brand img.brand-lockup{width:195px;max-height:50px}}
+@media(max-width:420px){nav .brand img.brand-lockup{width:175px;max-height:45px}}
 .kpis .card:has(strong){border-top:3px solid #ee701e}
 .kpis .card strong{overflow-wrap:anywhere}
 
