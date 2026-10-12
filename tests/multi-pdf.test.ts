@@ -33,6 +33,7 @@ test("multi-PDF draft can upload, list and remove independent originals",async()
    const stmt={
     bind(...next:any[]){args=next;return stmt;},
     async first(){
+     if(sql.includes("FROM sqlite_master"))return {name:"product_files"};
      if(sql.includes("SELECT status FROM products"))return {status:"draft"};
      if(sql.includes("COUNT(*) AS n"))return {n:files.length,bytes:files.reduce((a,f)=>a+f.size_bytes,0)};
      if(sql.includes("SELECT original_key FROM product_files"))return files.find(f=>f.id===args[0])||null;
