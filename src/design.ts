@@ -119,5 +119,24 @@ footer a{color:#f7dcae}
 .nav .brand img,.side-brand img{filter:drop-shadow(0 2px 5px #ee701e55)}
 .kpis .card:has(strong){border-top:3px solid #ee701e}
 .kpis .card strong{overflow-wrap:anywhere}
+
+/* Thay: figures appear directly on the dark hero; never inside square cutout cards. */
+.market-hero,.sales-hero{min-height:500px}
+.hero-visual.hero-thay{position:relative;min-height:405px;display:flex;align-items:flex-end;justify-content:center;overflow:visible;isolation:isolate}
+.hero-visual.hero-thay:before{content:"";position:absolute;left:50%;top:51%;transform:translate(-50%,-50%);width:min(108%,410px);height:min(90%,400px);border-radius:50%;background:radial-gradient(ellipse at center,#dc721e35 0%,#bd5b101c 48%,transparent 74%);filter:blur(2px);z-index:-1;box-shadow:none}
+.hero-visual.hero-thay img.thay-avatar{display:block;width:auto;max-width:100%;height:clamp(410px,42vw,510px);object-fit:contain;object-position:center bottom;filter:drop-shadow(0 18px 22px #0008)}
+.hero-visual.hero-thay img.thay-avatar.portrait{height:clamp(350px,37vw,460px);max-width:107%;margin-bottom:-26px}
+.hero-visual.hero-thay img.thay-avatar.full{margin-bottom:-37px}
+.hero-visual.hero-thay .hero-mini{z-index:2;right:-4%;bottom:9px}
+.student-panel .student-intro{position:relative;overflow:hidden;display:flex;align-items:center;min-height:212px;padding:28px 34px}
+.student-panel .student-intro>div{position:relative;z-index:2;max-width:calc(100% - 185px)}
+.student-panel .student-intro h1{font-size:clamp(1.8rem,3vw,2.45rem)}
+.student-panel .student-intro .eyebrow{color:#ffd49b}
+.student-panel img.student-thay{position:absolute;right:21px;bottom:-19px;width:auto;height:218px;max-width:41%;object-fit:contain;object-position:bottom;filter:drop-shadow(0 8px 15px #0006);z-index:1}
+.admin-intro{position:relative;display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:169px;padding:10px 20px 8px 0;border-bottom:1px solid #e5d5be}
+.admin-intro>div{max-width:740px}.admin-intro img{width:auto;height:145px;object-fit:contain;object-position:bottom;align-self:end;flex-shrink:0;filter:drop-shadow(0 8px 13px #50301730)}
+@media(max-width:960px){.hero-visual.hero-thay img.thay-avatar{height:clamp(325px,43vw,450px)}.hero-visual.hero-thay img.thay-avatar.portrait{height:clamp(315px,40vw,425px)}.hero-visual.hero-thay{min-height:340px}}
+@media(max-width:740px){.market-hero,.sales-hero{min-height:0}.hero-visual.hero-thay{min-height:275px;height:275px;margin:0 -10px -30px;overflow:hidden}.hero-visual.hero-thay img.thay-avatar{height:325px;margin-bottom:-38px}.hero-visual.hero-thay img.thay-avatar.portrait{height:335px;margin-bottom:-49px}.hero-visual.hero-thay .hero-mini{right:4%;bottom:38px}.student-panel .student-intro{min-height:200px}.student-panel img.student-thay{right:3px;height:190px}.student-panel .student-intro>div{max-width:calc(100% - 133px)}.admin-intro img{height:108px}.admin-intro{min-height:140px}}
+@media(max-width:460px){.student-panel .student-intro{min-height:225px;padding:25px 20px}.student-panel .student-intro>div{max-width:61%}.student-panel .student-intro h1{font-size:1.8rem;line-height:1.16}.student-panel .student-intro p{font-size:.83rem;line-height:1.45}.student-panel img.student-thay{height:186px;right:-12px}.admin-intro img{height:100px}.admin-intro{padding:10px 0}.hero-visual.hero-thay .hero-mini{font-size:.72rem;max-width:65%;text-align:center}}
 @media(max-width:460px){.feature-grid{grid-template-columns:1fr}.feature-grid .feature{min-height:auto}.market-hero,.sales-hero{padding:28px 21px}.hero-orbit{width:min(100%,210px)}}
 `;

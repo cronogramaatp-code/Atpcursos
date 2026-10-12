@@ -44,7 +44,7 @@ document.querySelector('#confirm').onsubmit=async e=>{e.preventDefault();const e
 </script>`,"Confirmar alteração");
 }
 export function customerMaterialsPage(){
-return layout(`<div class="student-panel"><div class="student-intro"><span class="eyebrow">Portal do aluno</span><h1>Minha biblioteca digital</h1><p>Seus materiais e cortesias reunidos em um único lugar.</p></div><div class="card"><h2>Acessar meus PDFs</h2><p class="muted">As compras são entregues por e-mail. Para consultar suas cortesias, acesse sua conta opcional.</p>
+return layout(`<div class="student-panel"><div class="student-intro"><div><span class="eyebrow">Portal do aluno</span><h1>Minha biblioteca digital</h1><p>Seus materiais e cortesias reunidos em um único lugar.</p></div><img class="student-thay" src="/brand/thay-avatar-portrait.webp?v=sem-letras-2" alt="Avatar ilustrada da Thay" width="170" height="218" loading="lazy"></div><div class="card"><h2>Acessar meus PDFs</h2><p class="muted">As compras são entregues por e-mail. Para consultar suas cortesias, acesse sua conta opcional.</p>
 <form id="login"><label>E-mail<input id="email" type="email" required autocomplete="email"></label><label>Senha<input id="password" type="password" required autocomplete="current-password"></label><button class="btn">Entrar</button><p id="message"></p></form>
 <section id="account" hidden><h2 id="hello"></h2><button type="button" id="logout" class="btn">Sair</button><div id="files"></div></section></div></div>
 <script>
