@@ -1,4 +1,5 @@
 import { Env, json,plain,html,readJSON,adminIdentity,originOK } from "./infra";
+import { seoRobots, seoSitemap } from "./seo";
 import { storefront,productPage,myMaterials,adminPage,adminImport } from "./ui";
 import { salesPage, rotateOffer } from "./sales-pages";
 import { clientJS } from "./client";
@@ -11,6 +12,8 @@ import { applyAction,courtesyDownload,courtesySessionDownload,login,logout,myAcc
 
 async function route(req:Request,env:Env,ctx:ExecutionContext):Promise<Response>{
  const url=new URL(req.url),p=url.pathname,method=req.method;
+ if(method==="GET" && p==="/robots.txt")return seoRobots(env);
+ if(method==="GET" && p==="/sitemap.xml")return seoSitemap(env);
  if(method==="GET" && (p.startsWith("/brand/") || p.startsWith("/fonts/") || ["/manifest.webmanifest","/sw.js","/robots.txt","/favicon.ico"].includes(p)))return env.ASSETS.fetch(req);
  if(p==="/app.js"&&method==="GET")return new Response(clientJS,{headers:{"content-type":"application/javascript; charset=utf-8","cache-control":"public, max-age=300","x-content-type-options":"nosniff"}});
  if(p==="/health")return json({service:"atpcursos",stage:env.ENVIRONMENT||"staging",ready:!!env.DB&&!!env.PDFS});
@@ -20,7 +23,13 @@ async function route(req:Request,env:Env,ctx:ExecutionContext):Promise<Response>
  if((p==="/"||p==="/loja")&&method==="GET")return html(storefront(),req);
  if(p==="/meus-materiais"&&method==="GET")return html(customerMaterialsPage(),req);
  if(p==="/confirmar"&&method==="GET")return html(confirmPage(),req);
- if(p.startsWith("/produto/")&&method==="GET")return html(productPage(decodeURIComponent(p.slice(9))),req);
+ if(p.startsWith("/produto/")&&method==="GET"){
+  const slug=decodeURIComponent(p.slice(9));
+  if(!env.DB)return json({error:"Produto indisponível"},503);
+  const product=await env.DB.prepare("SELECT slug FROM products WHERE slug=? AND status='published'").bind(slug).first();
+  if(!product)return new Response("Produto não encontrado",{status:404,headers:{"content-type":"text/plain; charset=utf-8","x-robots-tag":"noindex"}});
+  return html(productPage(slug),req);
+ }
  if(!env.DB||!env.PDFS)return json({error:"Banco e R2 ainda não configurados"},503);
  let adminEmail:string|null=null;
  if(p==="/adm"||p.startsWith("/adm/")||p.startsWith("/api/admin/")){
