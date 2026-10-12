@@ -4,6 +4,7 @@ import { salesPage, rotateOffer } from "./sales-pages";
 import { clientJS } from "./client";
 import { quote,createCheckout,receiveWebhook,reconcile } from "./checkout";
 import { getDownload } from "./fulfillment";
+import { getBundleDownload } from "./bundle-fulfillment";
 import { overview,adminProducts,publishProduct,presence } from "./admin";
 import { appendProductPDF,productFiles,removeProductPDF } from "./product-files";
 import { adminCustomersPage, confirmPage, customerMaterialsPage } from "./admin-customers-ui";
@@ -67,6 +68,7 @@ async function route(req:Request,env:Env,ctx:ExecutionContext):Promise<Response>
  if(p==="/api/webhooks/infinitepay"&&method==="POST")return receiveWebhook(req,env,ctx);
  if(p==="/api/presence"&&method==="POST")return presence(req,env);
  if(p.startsWith("/api/download/")&&method==="GET")return getDownload(env,p.slice("/api/download/".length));
+ if(p.startsWith("/api/bundle-download/")&&method==="GET")return getBundleDownload(env,p.slice("/api/bundle-download/".length));
  if(p==="/api/admin/overview"&&method==="GET")return overview(env);
  if(p==="/api/admin/products"&&(method==="GET"||method==="POST"))return adminProducts(req,env);
  const up=p.match(/^\/api\/admin\/products\/([a-f0-9-]{36})\/upload$/i);
