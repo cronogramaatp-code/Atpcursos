@@ -12,9 +12,14 @@ export function safeFileTitle(value:string):string {
 export function pdfEnvelopeOK(header:string,tail:string):boolean {
  return header.startsWith("%PDF-")&&tail.includes("%%EOF");
 }
-type FileRow={id:string;title:string;original_key:string;page_count:number;size_bytes:number;position:number};
+async function schemaReady(env:Env):Promise<boolean>{
+ const row=await env.DB.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='product_files'").first();
+ return !!row;
+}
+
 
 export async function productFiles(env:Env,productId:string){
+ if(!await schemaReady(env))return json({error:"Migração de banco pendente neste ambiente"},503);
  const files=await env.DB.prepare("SELECT id,title,page_count,size_bytes,position FROM product_files WHERE product_id=? ORDER BY position,created_at,id")
  .bind(productId).all();
  return json({files:files.results,maxFileBytes:MAX_PDF_BYTES,maxProductFiles:MAX_PRODUCT_FILES,maxProductBytes:MAX_PRODUCT_BYTES});
@@ -29,6 +34,7 @@ export async function appendProductPDF(req:Request,env:Env,productId:string){
  if(!Number.isSafeInteger(length)||length<24||length>MAX_PDF_BYTES)
   return json({error:"PDF deve ter entre 24 bytes e 50 MB; Content-Length é obrigatório"},413);
  if(!req.body)return json({error:"PDF ausente"},422);
+ if(!await schemaReady(env))return json({error:"Migração de banco pendente neste ambiente"},503);
  const product=await env.DB.prepare("SELECT status FROM products WHERE id=?")
  .bind(productId).first<{status:string}>();
  if(!product||product.status!=="draft")return json({error:"Produto inexistente ou não está em rascunho"},409);
@@ -70,6 +76,7 @@ export async function appendProductPDF(req:Request,env:Env,productId:string){
 }
 
 export async function removeProductPDF(env:Env,productId:string,fileId:string){
+ if(!await schemaReady(env))return json({error:"Migração de banco pendente neste ambiente"},503);
  const product=await env.DB.prepare("SELECT status FROM products WHERE id=?")
   .bind(productId).first<{status:string}>();
  if(!product||product.status!=="draft")return json({error:"Apenas rascunhos podem ser editados"},409);
