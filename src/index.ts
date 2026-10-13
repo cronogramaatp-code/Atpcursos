@@ -26,9 +26,9 @@ async function route(req:Request,env:Env,ctx:ExecutionContext):Promise<Response>
  if(p.startsWith("/produto/")&&method==="GET"){
   const slug=decodeURIComponent(p.slice(9));
   if(!env.DB)return json({error:"Produto indisponível"},503);
-  const product=await env.DB.prepare("SELECT slug FROM products WHERE slug=? AND status='published'").bind(slug).first();
+  const product=await env.DB.prepare("SELECT slug,title,description,category,contest,discipline FROM products WHERE slug=? AND status='published'").bind(slug).first();
   if(!product)return new Response("Produto não encontrado",{status:404,headers:{"content-type":"text/plain; charset=utf-8","x-robots-tag":"noindex"}});
-  return html(productPage(slug),req);
+  return html(productPage(product as { slug:string; title:string; description:string|null; category:string|null; contest:string|null; discipline:string|null }),req);
  }
  if(!env.DB||!env.PDFS)return json({error:"Banco e R2 ainda não configurados"},503);
  let adminEmail:string|null=null;
