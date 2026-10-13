@@ -30,8 +30,20 @@ export async function createCheckout(req:Request,env:Env){
  const {products,hash,pricing}=await quote(env,email,ids),orderId=uuid();
  await env.DB.prepare("INSERT INTO orders(id,buyer_name,buyer_email,buyer_email_hash,status,total_cents,full_cents,discount_cents,discount_rate,provider_order_nsu) VALUES(?,?,?,?,?,?,?,?,?,?)")
   .bind(orderId,name,email,hash,"pending",pricing.totalCents,pricing.fullCents,pricing.discountCents,pricing.ratePercent,orderId).run();
- for(const p of products)await env.DB.prepare("INSERT INTO order_items(id,order_id,product_id,title_snapshot,price_snapshot_cents,original_key_snapshot) VALUES(?,?,?,?,?,?)")
-  .bind(uuid(),orderId,p.id,p.title,p.price_cents,p.original_key).run();
+ for(const p of products){
+  const itemId=uuid();
+  await env.DB.prepare("INSERT INTO order_items(id,order_id,product_id,title_snapshot,price_snapshot_cents,original_key_snapshot) VALUES(?,?,?,?,?,?)")
+   .bind(itemId,orderId,p.id,p.title,p.price_cents,p.original_key).run();
+  // Immutable file snapshots: future product revisions cannot change a paid buyer's bundle.
+  const files=await env.DB.prepare("SELECT id,title,original_key,position FROM product_files WHERE product_id=? ORDER BY position,created_at,id")
+   .bind(p.id).all<{id:string;title:string;original_key:string;position:number}>();
+  if(!files.results.length)throw Error("product invalid");
+  for(let pos=0;pos<files.results.length;pos++){
+   const file=files.results[pos];
+   await env.DB.prepare("INSERT INTO order_item_files(id,order_item_id,product_file_id,title_snapshot,original_key_snapshot,position) VALUES(?,?,?,?,?,?)")
+    .bind(uuid(),itemId,file.id,file.title,file.original_key,pos).run();
+  }
+ }
  const origin=env.PUBLIC_BASE_URL||new URL(req.url).origin;
  const r=await fetch("https://api.checkout.infinitepay.io/links",{
   method:"POST",headers:{"content-type":"application/json"},
