@@ -34,7 +34,7 @@ test("logo, favicons and OG share preview exist",()=>{
  assert.equal(og[0],0xff);assert.equal(og[1],0xd8);
 });
 test("all important app HTML pages reference real logo and absolute social URLs",async()=>{
- for(const p of ["/loja","/produto/material-teste","/meus-materiais"]){
+ for(const p of ["/loja","/meus-materiais"]){
   const r=await worker.fetch(new Request("https://atpcursos.example"+p),{} as any,{} as any);
   const html=await r.text();
   assert.equal(r.status,200);
@@ -73,4 +73,8 @@ test("amber logo preserves original source privately and regenerates all sharing
   const image=readFileSync(file(path));
   assert.equal(image.subarray(1,4).toString("ascii"),"PNG");
  }
+});
+test("product page without configured DB fails closed instead of generating a soft 404",async()=>{
+ const r=await worker.fetch(new Request("https://atpcursos.example/produto/material-teste"),{} as any,{} as any);
+ assert.equal(r.status,503);
 });

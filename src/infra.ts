@@ -12,7 +12,7 @@ export const plain=(s:string,status=200)=>new Response(s,{status,headers:{"conte
 export const html=(s:string,req?:Request)=>{
  const url=req?new URL(req.url):null;
  const body=s.replaceAll("__ORIGIN__",url?.origin||"").replaceAll("__PAGE_URL__",url?url.origin+url.pathname:"");
- return new Response(body,{headers:{"content-type":"text/html; charset=utf-8","cache-control":"no-store","referrer-policy":"no-referrer","x-content-type-options":"nosniff","x-frame-options":"DENY"}});
+ return new Response(body,{headers:{"content-type":"text/html; charset=utf-8","cache-control":"no-store","referrer-policy":"no-referrer","x-content-type-options":"nosniff","x-frame-options":"DENY",...(url && url.hostname !== "atpcursos.cronogramaatp.com.br" ? {"x-robots-tag":"noindex, nofollow"} : {})}});
 };
 export const moneyOK=(n:unknown):n is number=>Number.isSafeInteger(n)&&Number(n)>=100&&Number(n)<=20_000_000;
 export const emailOK=(e:string)=>e.length>=5&&e.length<=254&&/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
