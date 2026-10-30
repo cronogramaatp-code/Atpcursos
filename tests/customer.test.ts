@@ -15,10 +15,12 @@ test("access and reset tokens are random, hashes do not disclose token",async()=
  const a=newSecret(),b=newSecret();assert.equal(a.length,64);assert.notEqual(a,b);
  assert.equal((await secretHash(a)).length,64);assert.notEqual(await secretHash(a),a);
 });
-test("password hash with salt, 12 character minimum and verify failure",async()=>{
+test("student PIN hash with pepper, exactly 8 digits and verify failure",async()=>{
  assert.equal(validPassword("short"),false);
- const h=await passwordHash("Senha-forte-12345");
+ assert.equal(validPassword("00001234"),true);
+ assert.equal(validPassword("123456789"),false);
+ const h=await passwordHash("00001234","unit-test-secret-must-be-at-least-32-chars");
  assert.equal(h.iterations,310000);
- assert.ok(await passwordMatch("Senha-forte-12345",h.salt,h.digest,h.iterations));
- assert.equal(await passwordMatch("Senha-errada-12345",h.salt,h.digest,h.iterations),false);
+ assert.ok(await passwordMatch("00001234",h.salt,h.digest,h.iterations,"unit-test-secret-must-be-at-least-32-chars"));
+ assert.equal(await passwordMatch("00001235",h.salt,h.digest,h.iterations,"unit-test-secret-must-be-at-least-32-chars"),false);
 });

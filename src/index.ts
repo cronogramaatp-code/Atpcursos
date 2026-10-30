@@ -9,8 +9,10 @@ import { getBundleDownload } from "./bundle-fulfillment";
 import { appendProductPDF,productFiles,removeProductPDF } from "./product-files";
 import { overview,adminProducts,publishProduct,presence } from "./admin";
 import { adminCustomersPage, confirmPage, customerMaterialsPage } from "./admin-customers-ui";
-import { listCustomers,createCustomer,grantCourtesy,getCourtesies,resendCourtesy,revokeCourtesy,changeEmailRequest,passwordResetRequest } from "./customer-admin";
-import { applyAction,courtesyDownload,courtesySessionDownload,login,logout,myAccount } from "./customer-public";
+import { listCustomers,createCustomer,grantCourtesy,getCourtesies,resendCourtesy,revokeCourtesy,changeEmailRequest,passwordResetRequest,selfServicePINReset } from "./customer-admin";
+import { applyAction,courtesyDownload,courtesySessionDownload,login,logout,myAccount,purchaseFileDownload } from "./customer-public";
+import { pinState,pinRequest,pinEnroll,pinLogin,pinLogout,hasAdminPin } from "./admin-pin";
+import { adminPinPage } from "./admin-pin-ui";
 
 async function route(req:Request,env:Env,ctx:ExecutionContext):Promise<Response>{
  const url=new URL(req.url),p=url.pathname,method=req.method;
@@ -39,6 +41,20 @@ async function route(req:Request,env:Env,ctx:ExecutionContext):Promise<Response>
    return plain("Cloudflare Access ainda não configurado para o painel",503);
   adminEmail=await adminIdentity(req,env);
   if(!adminEmail)return plain("Acesso negado",403);
+  // Cloudflare Access identifies the admin. The PIN is a separate, server-verified gate.
+  if(p.startsWith("/api/admin/pin/")){
+   if(method!=="GET"&&!originOK(req))return json({error:"Origem não permitida"},403);
+   if(p==="/api/admin/pin/status"&&method==="GET")return pinState(env,adminEmail);
+   if(p==="/api/admin/pin/request"&&method==="POST")return pinRequest(env,adminEmail);
+   if(p==="/api/admin/pin/enroll"&&method==="POST")return pinEnroll(req,env,adminEmail);
+   if(p==="/api/admin/pin/login"&&method==="POST")return pinLogin(req,env,adminEmail);
+   if(p==="/api/admin/pin/logout"&&method==="POST")return pinLogout(req,env,adminEmail);
+   return json({error:"Rota não encontrada"},404);
+  }
+  if(!(await hasAdminPin(req,env,adminEmail))){
+   if(method==="GET"&&(p==="/adm"||p.startsWith("/adm/")))return html(adminPinPage(),req);
+   return json({error:"Confirmação do PIN administrativo necessária"},401);
+  }
  }
  if((p==="/adm"||p==="/adm/")&&method==="GET")return html(adminPage(),req);
  if(p==="/adm/produtos"&&method==="GET")return html(adminImport(),req);
@@ -101,9 +117,12 @@ async function route(req:Request,env:Env,ctx:ExecutionContext):Promise<Response>
  if(resendGrant&&method==="POST")return resendCourtesy(env,adminEmail!,resendGrant[1]);
  const revokeGrant=p.match(/^\/api\/admin\/courtesies\/([a-f0-9-]{36})\/revoke$/i);
  if(revokeGrant&&method==="POST")return revokeCourtesy(env,adminEmail!,revokeGrant[1]);
+ if(p==="/api/customer/request-reset"&&method==="POST")return selfServicePINReset(req,env);
  if(p==="/api/customer/login"&&method==="POST")return login(req,env);
  if(p==="/api/customer/logout"&&method==="POST")return logout(req,env);
  if(p==="/api/customer/me"&&method==="GET")return myAccount(req,env);
+ const purchasedFile=p.match(/^\/api\/customer\/purchases\/(bundle|legacy)\/([a-f0-9-]{36})\/download$/i);
+ if(purchasedFile&&method==="GET")return purchaseFileDownload(req,env,purchasedFile[1],purchasedFile[2]);
  const accountAction=p.match(/^\/api\/customer\/action\/(password_reset|email_change)$/);
  if(accountAction&&method==="POST")return applyAction(req,env,accountAction[1]);
  const owned=p.match(/^\/api\/customer\/courtesies\/([a-f0-9-]{36})\/download$/i);
