@@ -1,4 +1,4 @@
-import { Env, json, uuid, readJSON, moneyOK, emailOK, emailHash } from "./infra";
+import { Env, json, uuid, readJSON, moneyOK, emailOK, emailHash, sha256, now } from "./infra";
 import { quotePrice } from "./domain/pricing";
 import { fulfillOrder } from "./fulfillment";
 import { notifyConfirmedSale } from "./sale-alerts";
@@ -103,20 +103,29 @@ export async function receiveWebhook(req:Request,env:Env,ctx:ExecutionContext){
  if(!isUUID(id)||transaction.length<4||slug.length<2||slug.length>160)return json({error:"Evento inválido"},400);
  const exists=await env.DB.prepare("SELECT id FROM orders WHERE id=?").bind(id).first();
  if(!exists)return json({error:"Pedido desconhecido"},400);
+ // Stable identifier for the provider event triple prevents unbounded duplicates.
+ // Include the invoice slug so a different, legitimate event is never suppressed.
+ const eventId=await sha256(id+"\u0000"+transaction+"\u0000"+slug);
  await env.DB.prepare("INSERT OR IGNORE INTO payment_events(id,order_id,transaction_nsu,status) VALUES(?,?,?,?)")
-  .bind(uuid(),id,transaction,"received:"+slug).run();
+  .bind(eventId,id,transaction,"received:"+slug).run();
  // No automatic fulfillment until payment_check verifies the amount server-to-server.
  ctx.waitUntil((async()=>{
-  try{if(await confirmPayment(env,id,transaction,slug))await Promise.allSettled([fulfillOrder(env,id),notifyConfirmedSale(env,id)])}
+  try{if(await confirmPayment(env,id,transaction,slug)){
+   await env.DB.prepare("UPDATE payment_events SET status='reconciled' WHERE id=? AND status LIKE 'received:%'").bind(eventId).run();
+   await Promise.allSettled([fulfillOrder(env,id),notifyConfirmedSale(env,id)]);
+  }}
   catch{/* Durable event is retained for scheduled reconciliation. */}
  })());
  return json({success:true,message:null});
 }
 export async function reconcile(env:Env){
- const events=await env.DB.prepare("SELECT id,order_id,transaction_nsu,status FROM payment_events WHERE status LIKE 'received:%' ORDER BY created_at DESC LIMIT 10")
+ // Least-attempted first: ten persistently failing events cannot block all new ones.
+ const events=await env.DB.prepare("SELECT e.id,e.order_id,e.transaction_nsu,e.status FROM payment_events e LEFT JOIN payment_event_retries a ON a.event_id=e.id WHERE e.status LIKE 'received:%' ORDER BY COALESCE(a.attempts,0) ASC,e.created_at ASC,e.id ASC LIMIT 10")
   .all<{id:string;order_id:string;transaction_nsu:string;status:string}>();
  for(const e of events.results){
   try{
+   await env.DB.prepare("INSERT INTO payment_event_retries(event_id,attempts,last_attempt_unix) VALUES(?,1,?) ON CONFLICT(event_id) DO UPDATE SET attempts=payment_event_retries.attempts+1,last_attempt_unix=excluded.last_attempt_unix")
+    .bind(e.id,now()).run();
    if(await confirmPayment(env,e.order_id,e.transaction_nsu,e.status.slice(9))){
     await env.DB.prepare("UPDATE payment_events SET status='reconciled' WHERE id=?").bind(e.id).run();
     await Promise.allSettled([fulfillOrder(env,e.order_id),notifyConfirmedSale(env,e.order_id)]);
