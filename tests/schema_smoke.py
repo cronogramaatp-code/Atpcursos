@@ -13,7 +13,7 @@ assert required <= tables, required-tables
 p="11111111-1111-4111-8111-111111111111"
 c="22222222-2222-4222-8222-222222222222"
 g="33333333-3333-4333-8333-333333333333"
-db.execute("INSERT INTO products(id,slug,title,category,price_cents,status,original_key) VALUES(?,?,?,?,?,?,?)",(p,"teste","Teste","Simulados",1000,"published","originals/test.pdf"))
+db.execute("INSERT INTO products(id,slug,title,category,price_cents,status,original_key) VALUES(?,?,?,?,?,?,?)",(p,"teste","Teste","Simulados",1000,"draft","originals/test.pdf"))
 db.execute("INSERT INTO customers(id,full_name,email,email_hash) VALUES(?,?,?,?)",(c,"Teste Aluno","aluno@example.org","hashed-email"))
 db.execute("INSERT INTO courtesy_grants(id,customer_id,product_id,granted_by) VALUES(?,?,?,?)",(g,c,p,"admin@example.org"))
 try:
@@ -33,6 +33,8 @@ assert db.execute("SELECT COUNT(*) FROM sale_alerts WHERE order_id=?",(order_id,
 db.executescript((root/"migrations"/"0005_multi_pdf_bundles.sql").read_text(encoding="utf-8"))
 legacy=db.execute("SELECT id,original_key FROM product_files WHERE product_id=?",(p,)).fetchall()
 assert len(legacy)==1 and legacy[0][1]=="originals/test.pdf", "legacy PDFs must be available as product_files"
+# Complete the legacy backfill while the product is still a draft, then publish.
+db.execute("UPDATE products SET status='published' WHERE id=?",(p,))
 identity="a"*64
 db.execute("INSERT INTO admin_pin_accounts(identity_hash,pin_salt,pin_digest,pin_iterations) VALUES(?,?,?,?)",(identity,"b"*64,"c"*64,310000))
 db.execute("INSERT INTO admin_pin_sessions(token_hash,identity_hash,expires_at) VALUES(?,?,?)",("d"*64,identity,2100000000))
@@ -62,4 +64,10 @@ try:
 except sqlite3.IntegrityError: pass
 db.executescript((root/"migrations"/"0007_customer_order_ownership.sql").read_text(encoding="utf-8"))
 assert db.execute("SELECT customer_id FROM customer_order_links WHERE order_id=?",(order_id,)).fetchone()[0]==c
-print("PASS: migrations 0001-0007; purchases ownership, bundle legacy, permissions, sessions, retries and sale alerts")
+db.executescript((root/"migrations"/"0008_product_publication_guards.sql").read_text(encoding="utf-8"))
+assert db.execute("SELECT status FROM products WHERE id=?",(p,)).fetchone()[0]=="published"
+try:
+    db.execute("DELETE FROM product_files WHERE product_id=?",(p,))
+    raise AssertionError("published PDF delete was allowed")
+except sqlite3.IntegrityError: pass
+print("PASS: migrations 0001-0008; immutable published PDFs, ownership, bundle legacy, sessions and alerts")

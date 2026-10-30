@@ -39,7 +39,7 @@ export async function publishProduct(env:Env,id:string,adminEmail:string){
   return json({error:"Adicione de 1 a 20 PDFs antes de publicar"},409);
  for(const f of files.results)if(!await env.PDFS.head(f.original_key))
   return json({error:"Um PDF do produto está ausente do armazenamento privado"},409);
- const r=await env.DB.prepare("UPDATE products SET status='published',updated_at=CURRENT_TIMESTAMP WHERE id=? AND status='draft'").bind(id).run();
+ const r=await env.DB.prepare("UPDATE products SET status='published',updated_at=CURRENT_TIMESTAMP WHERE id=? AND status='draft' AND (SELECT COUNT(*) FROM product_files WHERE product_id=?)=?").bind(id,id,files.results.length).run();
  if((r.meta?.changes||0)!==1)return json({error:"Produto alterado durante a publicação"},409);
  await env.DB.prepare("INSERT INTO audit_logs(id,action,actor,target) VALUES(?,?,?,?)")
   .bind(uuid(),"publish_product",adminEmail,id).run();
