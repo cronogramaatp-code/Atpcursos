@@ -10,6 +10,8 @@ test("admin draft editor can list, add and remove PDF files using existing prote
  assert.match(clientJS,/maxProductFiles/);
  assert.match(clientJS,/maxFileBytes/);
  assert.match(clientJS,/name=.+encodeURIComponent/);
+ assert.match(clientJS,/f\.page_count===1/);
+ assert.match(clientJS,/p\.file_count===1/);
  assert.doesNotThrow(()=>new Function(clientJS));
 });
 

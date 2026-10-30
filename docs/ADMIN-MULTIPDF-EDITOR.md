@@ -13,7 +13,7 @@ Estado: implementado em branch isolada; nenhuma operação em produção ou publ
 
 ## Garantias e QA
 - Suíte TypeScript e Pages, testes de interface estática/parse JavaScript, testes já existentes de upload/listagem/remoção em R2 simulado, migrações 0001–0007 e `npm audit` executados localmente.
-- Os testes de interface verificam presença dos endpoints protegidos, métodos e limites de tamanho, mas não substituem um **teste de navegador com Cloudflare Access + PIN + R2 real em staging**.
+- A validação local com Playwright no VAIO abriu a tela real de ADM em uma página isolada com respostas de API simuladas. Confirmou a listagem inicial de 1 PDF, a chamada DELETE que zerou a lista e a inclusão via formulário que acionou PUT e restaurou 1 PDF. As verificações de interface também cobrem singular/plural. **Esse ensaio não substitui teste com Cloudflare Access + PIN + R2 real em staging**.
 - Atenção a arquivos grandes: metadados de páginas de PDF acima de 12 MB permanecem em revisão editorial até verificação separada.
 - Uma alteração de múltiplos arquivos não deve ser realizada após a publicação de um produto; corrigir o conteúdo mediante novo rascunho/processo editorial.
 
