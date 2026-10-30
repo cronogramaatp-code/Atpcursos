@@ -128,6 +128,7 @@ Responsáveis lógicos: Orquestrador, Engenharia, Integrações, UX e Auditor/QA
 - [ ] Adicionar CI no push da main, mantendo PR e npm audit; sem deploy automático sensível.
 - [ ] Testes E2E de catálogo, PIN, Access, compra simulada, webhook, 8 PDFs, reenvio, revogação, reembolso e rotas inválidas.
 - [ ] OWASP, secret-scan, dependências, migrações, segurança da R2, checagem de isolamento de banco e recursos Cloudflare.
+- [ ] **Bloqueio confirmado em CI (PR #8):** a tarefa MCP de npm audit --omit=dev --audit-level=high falhou em 29/10: 8 vulnerabilidades (4 high, 4 moderate) em @modelcontextprotocol SDK/client/server e transitivas body-parser, fast-uri, ip-address, qs. Reproduzir em clone isolado, determinar cadeia de versões, aplicar atualização mínima compatível em mcp/package.json e mcp/package-lock.json, revisar mudanças no protocolo OAuth/transporte e repetir testes MCP, integração e audit. NÃO usar npm audit fix --force sem análise de compatibilidade.
 - [ ] Verificar no commit candidato: build, schema, unit/integration, audit, Playwright, uptime, performance e screenshots.
 **Gate:** PASS técnico e independente; sem pendências P0/P1, QA confirmado em versão única.
 
