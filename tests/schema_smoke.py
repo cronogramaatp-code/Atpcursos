@@ -8,7 +8,7 @@ db.execute("PRAGMA foreign_keys=ON")
 for file in sorted((root/"migrations").glob("*.sql")):
     db.executescript(file.read_text(encoding="utf-8"))
 tables={x[0] for x in db.execute("SELECT name FROM sqlite_master WHERE type='table'")}
-required={"products","orders","customers","courtesy_grants","courtesy_download_tokens","customer_action_tokens","customer_sessions","customer_login_limits","store_settings","sale_alerts","product_files","order_item_files","bundle_deliveries","bundle_download_tokens","bundle_notifications","admin_pin_accounts","admin_pin_tokens","admin_pin_sessions","admin_pin_login_limits"}
+required={"products","orders","customers","courtesy_grants","courtesy_download_tokens","customer_action_tokens","customer_sessions","customer_login_limits","store_settings","sale_alerts","product_files","order_item_files","bundle_deliveries","bundle_download_tokens","bundle_notifications","admin_pin_accounts","admin_pin_tokens","admin_pin_sessions","admin_pin_login_limits","customer_order_links"}
 assert required <= tables, required-tables
 p="11111111-1111-4111-8111-111111111111"
 c="22222222-2222-4222-8222-222222222222"
@@ -48,4 +48,18 @@ except sqlite3.IntegrityError: pass
 db.executescript((root/"migrations"/"0006_admin_pin.sql").read_text(encoding="utf-8"))
 assert db.execute("SELECT COUNT(*) FROM admin_pin_accounts").fetchone()[0]==1
 assert db.execute("SELECT COUNT(*) FROM admin_pin_sessions").fetchone()[0]==1
-print("PASS: migrations 0001-0006; bundle legacy, permissions, sessions, retries, courtesy and sale alerts")
+# Ownership is immutable by order: duplicate claims cannot transfer access.
+db.execute("INSERT INTO customer_order_links(order_id,customer_id) VALUES(?,?)",(order_id,c))
+db.execute("INSERT OR IGNORE INTO customer_order_links(order_id,customer_id) VALUES(?,?)",(order_id,c))
+assert db.execute("SELECT COUNT(*) FROM customer_order_links WHERE order_id=?",(order_id,)).fetchone()[0]==1
+try:
+    db.execute("INSERT INTO customer_order_links(order_id,customer_id) VALUES(?,?)",("missing-order",c))
+    raise AssertionError("foreign key on order missing")
+except sqlite3.IntegrityError: pass
+try:
+    db.execute("INSERT INTO customer_order_links(order_id,customer_id) VALUES(?,?)",("missing-order","missing-customer"))
+    raise AssertionError("ownership accepted unknown customer")
+except sqlite3.IntegrityError: pass
+db.executescript((root/"migrations"/"0007_customer_order_ownership.sql").read_text(encoding="utf-8"))
+assert db.execute("SELECT customer_id FROM customer_order_links WHERE order_id=?",(order_id,)).fetchone()[0]==c
+print("PASS: migrations 0001-0007; purchases ownership, bundle legacy, permissions, sessions, retries and sale alerts")

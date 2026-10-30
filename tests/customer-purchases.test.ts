@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import { DatabaseSync } from "node:sqlite";
 import { secretHash } from "../src/domain/customer";
 import { emailHash } from "../src/infra";
-import { myAccount, purchaseFileDownload } from "../src/customer-public";
+import { myAccount, purchaseFileDownload, applyAction } from "../src/customer-public";
 import app from "../src/index";
 
 const buyerId="22222222-2222-4222-8222-222222222222";
@@ -16,7 +16,7 @@ const buyerKey="only-this-store-buyer-hash";
 
 async function fixture(){
  const db=new DatabaseSync(":memory:");
- for(const migration of ["0001_initial.sql","0002_courtesies_accounts.sql","0003_login_throttle.sql","0004_sale_alerts.sql","0005_multi_pdf_bundles.sql"]){
+ for(const migration of ["0001_initial.sql","0002_courtesies_accounts.sql","0003_login_throttle.sql","0004_sale_alerts.sql","0005_multi_pdf_bundles.sql","0007_customer_order_ownership.sql"]){
    db.exec(readFileSync(new URL("../migrations/"+migration,import.meta.url),"utf8"));
  }
  db.prepare("INSERT INTO customers(id,full_name,email,email_hash) VALUES(?,?,?,?)").run(buyerId,"Comprador Teste",buyerEmail,await emailHash(buyerEmail,buyerKey));
@@ -43,13 +43,14 @@ async function fixture(){
   const obj={
    bind(...values:unknown[]){return {
     async first(){return statement.get(...(values as any[]));},
-    async all(){return {results:statement.all(...(values as any[]))}}
+    async all(){return {results:statement.all(...(values as any[]))}},
+    async run(){const result=statement.run(...(values as any[]));return {meta:{changes:result.changes}};}
    }}
   };
   return obj;
  };
  const keys=orders.map(x=>"personalized-bundles/"+x[0]+"/"+x[5]+".pdf");
- const env:any={DB:{prepare:prep},PDFS:{async get(key:string){return keys.includes(key)?{body:new Blob(["%PDF-1.7 TEST"]).stream()}:null;}},BUYER_HASH_KEY:buyerKey};
+ const env:any={DB:{prepare:prep,async batch(stmts:any[]){db.exec("BEGIN");try{const out=[];for(const s of stmts)out.push(await s.run());db.exec("COMMIT");return out;}catch(e){db.exec("ROLLBACK");throw e;}}},PDFS:{async get(key:string){return keys.includes(key)?{body:new Blob(["%PDF-1.7 TEST"]).stream()}:null;}},BUYER_HASH_KEY:buyerKey};
  const request=(path:string,authenticated=true)=>new Request("https://atpconcursos.example"+path,{headers:authenticated?{cookie}:{}});
  return {db,env,request,orders};
 }

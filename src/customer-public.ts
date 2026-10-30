@@ -49,13 +49,13 @@ export async function myAccount(req:Request,env:Env){
  const user=await sessionUser(req,env);if(!user)return json({error:"Faça login"},401);
  const result=await env.DB.prepare("SELECT g.id,p.title,g.status,g.expires_at FROM courtesy_grants g JOIN products p ON p.id=g.product_id WHERE g.customer_id=? AND g.status='active' AND (g.expires_at IS NULL OR g.expires_at>?) ORDER BY g.created_at DESC").bind(user.id,now()).all();
  if(!env.BUYER_HASH_KEY)return json({error:"Configuração de compras pendente"},503);
- const purchases=await listCustomerPurchases(env,user.email);
+ const purchases=await listCustomerPurchases(env,user.id,user.email);
  return json({customer:user,courtesies:result.results,purchases});
 }
 export async function purchaseFileDownload(req:Request,env:Env,kind:string,id:string){
  const user=await sessionUser(req,env);
  if(!user)return plain("Acesso não autorizado",401);
- return downloadPurchasedFile(env,user.email,kind,id);
+ return downloadPurchasedFile(env,user.id,user.email,kind,id);
 }
 export async function applyAction(req:Request,env:Env,action:string){
  if(action!=="password_reset"&&action!=="email_change")return json({error:"Ação não permitida"},404);
@@ -85,6 +85,8 @@ export async function applyAction(req:Request,env:Env,action:string){
   if(!env.BUYER_HASH_KEY)return json({error:"Configuração pendente"},503);
   const batch=await env.DB.batch([
    env.DB.prepare("UPDATE customer_action_tokens SET used_at=CURRENT_TIMESTAMP WHERE token_hash=? AND used_at IS NULL AND expires_at>?").bind(hash,now()),
+   // Preserve prior purchases before changing the email. Only an account with a verified PIN can claim historical orders.
+   env.DB.prepare("INSERT OR IGNORE INTO customer_order_links(order_id,customer_id) SELECT o.id,c.id FROM orders o JOIN customers c ON c.id=? WHERE o.buyer_email_hash=c.email_hash AND c.status='active' AND c.password_digest IS NOT NULL").bind(row.customer_id),
    env.DB.prepare("UPDATE customers SET email=?,email_hash=?,updated_at=CURRENT_TIMESTAMP WHERE id=? AND status='active'").bind(email,await emailHash(email,env.BUYER_HASH_KEY),row.customer_id),
    env.DB.prepare("UPDATE customer_sessions SET revoked_at=CURRENT_TIMESTAMP WHERE customer_id=? AND revoked_at IS NULL").bind(row.customer_id),
    env.DB.prepare("UPDATE courtesy_download_tokens SET revoked_at=CURRENT_TIMESTAMP WHERE grant_id IN (SELECT id FROM courtesy_grants WHERE customer_id=?) AND revoked_at IS NULL").bind(row.customer_id)
