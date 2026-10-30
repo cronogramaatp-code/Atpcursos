@@ -9,7 +9,7 @@ import { getBundleDownload } from "./bundle-fulfillment";
 import { appendProductPDF,productFiles,removeProductPDF } from "./product-files";
 import { overview,adminProducts,publishProduct,presence } from "./admin";
 import { adminCustomersPage, confirmPage, customerMaterialsPage } from "./admin-customers-ui";
-import { listCustomers,createCustomer,grantCourtesy,getCourtesies,resendCourtesy,revokeCourtesy,changeEmailRequest,passwordResetRequest } from "./customer-admin";
+import { listCustomers,createCustomer,grantCourtesy,getCourtesies,resendCourtesy,revokeCourtesy,changeEmailRequest,passwordResetRequest,selfServicePINReset } from "./customer-admin";
 import { applyAction,courtesyDownload,courtesySessionDownload,login,logout,myAccount } from "./customer-public";
 import { pinState,pinRequest,pinEnroll,pinLogin,pinLogout,hasAdminPin } from "./admin-pin";
 import { adminPinPage } from "./admin-pin-ui";
@@ -117,6 +117,7 @@ async function route(req:Request,env:Env,ctx:ExecutionContext):Promise<Response>
  if(resendGrant&&method==="POST")return resendCourtesy(env,adminEmail!,resendGrant[1]);
  const revokeGrant=p.match(/^\/api\/admin\/courtesies\/([a-f0-9-]{36})\/revoke$/i);
  if(revokeGrant&&method==="POST")return revokeCourtesy(env,adminEmail!,revokeGrant[1]);
+ if(p==="/api/customer/request-reset"&&method==="POST")return selfServicePINReset(req,env);
  if(p==="/api/customer/login"&&method==="POST")return login(req,env);
  if(p==="/api/customer/logout"&&method==="POST")return logout(req,env);
  if(p==="/api/customer/me"&&method==="GET")return myAccount(req,env);
