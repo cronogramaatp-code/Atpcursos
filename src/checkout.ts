@@ -11,7 +11,7 @@ export async function quote(env:Env,email:string,ids:string[]){
  const products:P[]=[];
  for(const id of ids) {
   if(!isUUID(id))throw Error("invalid order");
-  const p=await env.DB.prepare("SELECT id,title,price_cents,original_key FROM products WHERE id=? AND status='published'")
+  const p=await env.DB.prepare("SELECT p.id,p.title,p.price_cents, (SELECT f.original_key FROM product_files f WHERE f.product_id=p.id AND f.original_key IS NOT NULL AND f.original_key<>'' ORDER BY f.position,f.created_at,f.id LIMIT 1) AS original_key FROM products p WHERE p.id=? AND p.status='published'")
    .bind(id).first<P>();
   if(!p||!moneyOK(p.price_cents)||!p.original_key)throw Error("invalid order");
   products.push(p);

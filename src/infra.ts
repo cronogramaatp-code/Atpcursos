@@ -28,7 +28,7 @@ export async function sha256(s:string){
  return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,"0")).join("");
 }
 export async function emailHash(email:string,secret:string){
- const key=await crypto.subtle.importKey("raw",new TextEncoder().encode(secret),"HMAC",false,["sign"]);
+ const key=await crypto.subtle.importKey("raw",new TextEncoder().encode(secret),{name:"HMAC",hash:"SHA-256"},false,["sign"]);
  const b=await crypto.subtle.sign("HMAC",key,new TextEncoder().encode(email.trim().toLowerCase()));
  return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,"0")).join("");
 }
