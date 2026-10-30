@@ -1,6 +1,7 @@
 import { PDFDocument, StandardFonts, degrees, rgb } from "pdf-lib";
 import { Env,json,plain,readJSON,emailHash,now,uuid } from "./infra";
 import {normalizeEmail,validEmail,validPassword,secretHash,newSecret,passwordHash,passwordMatch} from "./domain/customer";
+import { listCustomerPurchases,downloadPurchasedFile } from "./customer-purchases";
 
 const customerCookie="atp_customer_session";
 function getCookie(req:Request,key:string){
@@ -18,7 +19,7 @@ export async function login(req:Request,env:Env){
  const email=typeof body.email==="string"?normalizeEmail(body.email):"";
  const password=typeof body.password==="string"?body.password:"";
  if(!validEmail(email)||!validPassword(password))return json({error:"Credenciais inválidas"},401);
- if(!env.BUYER_HASH_KEY)return json({error:"Configuração de acesso pendente"},503);
+ if(!env.BUYER_HASH_KEY||!env.PIN_PEPPER||env.PIN_PEPPER.length<32)return json({error:"Configuração de acesso pendente"},503);
  // Five password attempts per recipient address per 15-minute rolling window.
  const identifier=await emailHash(email,env.BUYER_HASH_KEY),timestamp=now();
  await env.DB.prepare("INSERT INTO customer_login_limits(email_hash,window_start,attempts) VALUES(?,?,1) ON CONFLICT(email_hash) DO UPDATE SET window_start=CASE WHEN window_start<? THEN excluded.window_start ELSE window_start END, attempts=CASE WHEN window_start<? THEN 1 ELSE attempts+1 END")
@@ -28,7 +29,7 @@ export async function login(req:Request,env:Env){
  const record=await env.DB.prepare("SELECT id,password_salt,password_digest,password_iterations FROM customers WHERE email=? COLLATE NOCASE AND status='active'").bind(email)
   .first<{id:string;password_salt:string|null;password_digest:string|null;password_iterations:number|null}>();
  if(!record?.password_salt||!record.password_digest||!record.password_iterations||
-  !(await passwordMatch(password,record.password_salt,record.password_digest,record.password_iterations)))return json({error:"Credenciais inválidas"},401);
+  !(await passwordMatch(password,record.password_salt,record.password_digest,record.password_iterations,env.PIN_PEPPER)))return json({error:"Credenciais inválidas"},401);
  await env.DB.prepare("DELETE FROM customer_login_limits WHERE email_hash=?").bind(identifier).run();
  const secret=newSecret(),hash=await secretHash(secret);
  await env.DB.prepare("INSERT INTO customer_sessions(token_hash,customer_id,expires_at) VALUES(?,?,?)")
@@ -47,7 +48,14 @@ export async function logout(req:Request,env:Env){
 export async function myAccount(req:Request,env:Env){
  const user=await sessionUser(req,env);if(!user)return json({error:"Faça login"},401);
  const result=await env.DB.prepare("SELECT g.id,p.title,g.status,g.expires_at FROM courtesy_grants g JOIN products p ON p.id=g.product_id WHERE g.customer_id=? AND g.status='active' AND (g.expires_at IS NULL OR g.expires_at>?) ORDER BY g.created_at DESC").bind(user.id,now()).all();
- return json({customer:user,courtesies:result.results});
+ if(!env.BUYER_HASH_KEY)return json({error:"Configuração de compras pendente"},503);
+ const purchases=await listCustomerPurchases(env,user.id,user.email);
+ return json({customer:user,courtesies:result.results,purchases});
+}
+export async function purchaseFileDownload(req:Request,env:Env,kind:string,id:string){
+ const user=await sessionUser(req,env);
+ if(!user)return plain("Acesso não autorizado",401);
+ return downloadPurchasedFile(env,user.id,user.email,kind,id);
 }
 export async function applyAction(req:Request,env:Env,action:string){
  if(action!=="password_reset"&&action!=="email_change")return json({error:"Ação não permitida"},404);
@@ -59,8 +67,9 @@ export async function applyAction(req:Request,env:Env,action:string){
  if(!row)return json({error:"Link expirado ou já utilizado"},403);
  if(action==="password_reset"){
   const pass=typeof data.password==="string"?data.password:"";
-  if(!validPassword(pass))return json({error:"A senha precisa ter de 12 a 128 caracteres"},422);
-  const cred=await passwordHash(pass);
+  if(!validPassword(pass))return json({error:"O PIN deve conter exatamente 8 números"},422);
+  if(!env.PIN_PEPPER||env.PIN_PEPPER.length<32)return json({error:"Configuração de PIN pendente"},503);
+  const cred=await passwordHash(pass,env.PIN_PEPPER);
   const statements=[
     env.DB.prepare("UPDATE customer_action_tokens SET used_at=CURRENT_TIMESTAMP WHERE token_hash=? AND used_at IS NULL AND expires_at>?").bind(hash,now()),
     env.DB.prepare("UPDATE customers SET password_salt=?,password_digest=?,password_iterations=?,updated_at=CURRENT_TIMESTAMP WHERE id=? AND status='active'").bind(cred.salt,cred.digest,cred.iterations,row.customer_id),
@@ -76,6 +85,8 @@ export async function applyAction(req:Request,env:Env,action:string){
   if(!env.BUYER_HASH_KEY)return json({error:"Configuração pendente"},503);
   const batch=await env.DB.batch([
    env.DB.prepare("UPDATE customer_action_tokens SET used_at=CURRENT_TIMESTAMP WHERE token_hash=? AND used_at IS NULL AND expires_at>?").bind(hash,now()),
+   // Preserve prior purchases before changing the email. Only an account with a verified PIN can claim historical orders.
+   env.DB.prepare("INSERT OR IGNORE INTO customer_order_links(order_id,customer_id) SELECT o.id,c.id FROM orders o JOIN customers c ON c.id=? WHERE o.buyer_email_hash=c.email_hash AND c.status='active' AND c.password_digest IS NOT NULL").bind(row.customer_id),
    env.DB.prepare("UPDATE customers SET email=?,email_hash=?,updated_at=CURRENT_TIMESTAMP WHERE id=? AND status='active'").bind(email,await emailHash(email,env.BUYER_HASH_KEY),row.customer_id),
    env.DB.prepare("UPDATE customer_sessions SET revoked_at=CURRENT_TIMESTAMP WHERE customer_id=? AND revoked_at IS NULL").bind(row.customer_id),
    env.DB.prepare("UPDATE courtesy_download_tokens SET revoked_at=CURRENT_TIMESTAMP WHERE grant_id IN (SELECT id FROM courtesy_grants WHERE customer_id=?) AND revoked_at IS NULL").bind(row.customer_id)

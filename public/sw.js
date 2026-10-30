@@ -1,6 +1,6 @@
 /* ATPCursos PWA: cache ONLY the public shell and brand assets. Never cache orders, admin, customer accounts, PDFs, API, checkout, or download tokens. */
-const VERSION="atpcursos-public-amber-v3";
-const SHELL=["/loja","/app.js","/manifest.webmanifest","/brand/logo-atp.png","/brand/wordmark-atpcursos.png","/brand/icon-192.png","/brand/icon-512.png"];
+const VERSION="atpcursos-public-brand-v4";
+const SHELL=["/loja","/app.js","/manifest.webmanifest","/brand/logo-atp.png","/brand/icon-192.png","/brand/icon-512.png"];
 const isPublicAsset=p=>p==="/app.js"||p==="/manifest.webmanifest"||p.startsWith("/brand/");
 self.addEventListener("install",event=>{
  event.waitUntil(caches.open(VERSION).then(async cache=>{

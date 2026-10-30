@@ -14,7 +14,7 @@ export async function adminProducts(req:Request,env:Env){
  if(req.method==="GET"){
   const schema=await env.DB.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='product_files'").first();
   const q=schema
-   ?"SELECT id,slug,title,category,price_cents,status,page_count,(SELECT COUNT(*) FROM product_files f WHERE f.product_id=products.id) AS file_count FROM products ORDER BY created_at DESC LIMIT 100"
+   ?"SELECT id,slug,title,category,price_cents,status,(SELECT CASE WHEN COUNT(*)>0 AND SUM(CASE WHEN f.page_count>0 THEN 1 ELSE 0 END)=COUNT(*) THEN SUM(f.page_count) ELSE NULL END FROM product_files f WHERE f.product_id=products.id) AS page_count,(SELECT COUNT(*) FROM product_files f WHERE f.product_id=products.id) AS file_count FROM products ORDER BY created_at DESC LIMIT 100"
    :"SELECT id,slug,title,category,price_cents,status,page_count,CASE WHEN original_key IS NULL THEN 0 ELSE 1 END AS file_count FROM products ORDER BY created_at DESC LIMIT 100";
   const r=await env.DB.prepare(q).all();
   return json({products:r.results,multiPdfReady:!!schema});
@@ -39,7 +39,7 @@ export async function publishProduct(env:Env,id:string,adminEmail:string){
   return json({error:"Adicione de 1 a 20 PDFs antes de publicar"},409);
  for(const f of files.results)if(!await env.PDFS.head(f.original_key))
   return json({error:"Um PDF do produto está ausente do armazenamento privado"},409);
- const r=await env.DB.prepare("UPDATE products SET status='published',updated_at=CURRENT_TIMESTAMP WHERE id=? AND status='draft'").bind(id).run();
+ const r=await env.DB.prepare("UPDATE products SET status='published',updated_at=CURRENT_TIMESTAMP WHERE id=? AND status='draft' AND (SELECT COUNT(*) FROM product_files WHERE product_id=?)=?").bind(id,id,files.results.length).run();
  if((r.meta?.changes||0)!==1)return json({error:"Produto alterado durante a publicação"},409);
  await env.DB.prepare("INSERT INTO audit_logs(id,action,actor,target) VALUES(?,?,?,?)")
   .bind(uuid(),"publish_product",adminEmail,id).run();
