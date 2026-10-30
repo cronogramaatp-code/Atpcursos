@@ -2,7 +2,7 @@ import { createRemoteJWKSet, jwtVerify } from "jose";
 export interface Env {
  DB: D1Database; PDFS: R2Bucket; ASSETS: Fetcher; ENVIRONMENT?: string;
  INFINITEPAY_HANDLE?: string; RESEND_API_KEY?: string; RESEND_FROM_EMAIL?: string;
- PUBLIC_BASE_URL?: string; BUYER_HASH_KEY?: string; CHECKOUT_ENABLED?: string;
+ PUBLIC_BASE_URL?: string; BUYER_HASH_KEY?: string; PIN_PEPPER?: string; CHECKOUT_ENABLED?: string;
  ACCESS_TEAM_DOMAIN?: string; ACCESS_AUD?: string; ADMIN_ALLOWED_EMAILS?: string;
 }
 export const uuid=()=>crypto.randomUUID();
@@ -28,7 +28,7 @@ export async function sha256(s:string){
  return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,"0")).join("");
 }
 export async function emailHash(email:string,secret:string){
- const key=await crypto.subtle.importKey("raw",new TextEncoder().encode(secret),"HMAC",false,["sign"]);
+ const key=await crypto.subtle.importKey("raw",new TextEncoder().encode(secret),{name:"HMAC",hash:"SHA-256"},false,["sign"]);
  const b=await crypto.subtle.sign("HMAC",key,new TextEncoder().encode(email.trim().toLowerCase()));
  return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,"0")).join("");
 }
