@@ -24,7 +24,7 @@ Estado: implementado em branch isolada, sem merge ou deploy.
 - Testes de URL de download, documento legado, reembolso e segregação de dados anteriores continuam obrigatórios.
 
 ## Gate e cuidados
-- Aplicar `0007_customer_order_ownership.sql` **em staging antes de liberar o novo código em preview/produção**. Exigir consulta de backup/Time Travel, confirmar nome/ID do banco isolado e validar schema.
+- A migração `0007_customer_order_ownership.sql` foi **aplicada e validada no D1 `atpcursos-staging-db` em 30/10/2026**, após confirmação do banco e ponto de restauração Time Travel. Foram criados `customer_order_links` e o gatilho `deny_customer_order_owner_transfer`; contagens preservadas: 1 produto de teste, 0 pedidos, 0 alunos, 0 vínculos. **O D1 de produção não foi alterado**; sua migração exige gate separado antes do deploy.
 - Não ativar o checkout. Revisar fluxo real de e-mail com Resend e autenticação de PIN sem usar contas de terceiros.
 - Uma conta que nunca ativou PIN não herda automaticamente compras antigas ao mudar de e-mail: essa transferência exige recuperação verificada com suporte e trilha de auditoria.
 - Pedidos históricos vinculados somente por e-mail permanecem desprotegidos contra mudança de e-mail **até o usuário ativado executar a troca com esta versão**. Não executar migração em massa sem comprovar titularidade.
