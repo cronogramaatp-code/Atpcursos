@@ -1,6 +1,7 @@
 import { PDFDocument, StandardFonts, degrees, rgb } from "pdf-lib";
 import { Env,json,plain,readJSON,emailHash,now,uuid } from "./infra";
 import {normalizeEmail,validEmail,validPassword,secretHash,newSecret,passwordHash,passwordMatch} from "./domain/customer";
+import { listCustomerPurchases,downloadPurchasedFile } from "./customer-purchases";
 
 const customerCookie="atp_customer_session";
 function getCookie(req:Request,key:string){
@@ -47,7 +48,14 @@ export async function logout(req:Request,env:Env){
 export async function myAccount(req:Request,env:Env){
  const user=await sessionUser(req,env);if(!user)return json({error:"Faça login"},401);
  const result=await env.DB.prepare("SELECT g.id,p.title,g.status,g.expires_at FROM courtesy_grants g JOIN products p ON p.id=g.product_id WHERE g.customer_id=? AND g.status='active' AND (g.expires_at IS NULL OR g.expires_at>?) ORDER BY g.created_at DESC").bind(user.id,now()).all();
- return json({customer:user,courtesies:result.results});
+ if(!env.BUYER_HASH_KEY)return json({error:"Configuração de compras pendente"},503);
+ const purchases=await listCustomerPurchases(env,user.email);
+ return json({customer:user,courtesies:result.results,purchases});
+}
+export async function purchaseFileDownload(req:Request,env:Env,kind:string,id:string){
+ const user=await sessionUser(req,env);
+ if(!user)return plain("Acesso não autorizado",401);
+ return downloadPurchasedFile(env,user.email,kind,id);
 }
 export async function applyAction(req:Request,env:Env,action:string){
  if(action!=="password_reset"&&action!=="email_change")return json({error:"Ação não permitida"},404);

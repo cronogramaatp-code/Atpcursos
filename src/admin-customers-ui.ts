@@ -46,11 +46,24 @@ document.querySelector('#confirm').onsubmit=async e=>{e.preventDefault();const e
 export function customerMaterialsPage(){
 return layout(`<div class="student-panel"><div class="student-intro"><div><span class="eyebrow">Portal do aluno</span><h1>Minha biblioteca digital</h1><p>Seus materiais e cortesias reunidos em um único lugar.</p></div><img class="student-thay" src="/brand/thay-avatar-portrait.webp?v=sem-letras-2" alt="Avatar ilustrada da Thay" width="170" height="218" loading="lazy"></div><div class="card"><h2>Acessar meus PDFs</h2><p class="muted">As compras são entregues por e-mail. Para consultar suas cortesias, acesse sua conta opcional.</p>
 <form id="login"><label>E-mail<input id="email" type="email" required autocomplete="email"></label><label>PIN de 8 números<input id="password" type="password" required minlength="8" maxlength="8" inputmode="numeric" pattern="[0-9]{8}" autocomplete="current-password"></label><button class="btn">Entrar</button><button type="button" id="requestPIN" class="btn">Criar ou redefinir PIN</button><p id="message" role="status"></p></form>
-<section id="account" hidden><h2 id="hello"></h2><button type="button" id="logout" class="btn">Sair</button><div id="files"></div></section></div></div>
+<section id="account" hidden><h2 id="hello"></h2><button type="button" id="logout" class="btn">Sair</button><h3>Minhas compras</h3><div id="purchases"></div><h3>Cortesias</h3><div id="files"></div></section></div></div>
 <script>
 const $=s=>document.querySelector(s);const esc=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-async function load(){const r=await fetch('/api/customer/me');if(!r.ok)return;const d=await r.json();$('#login').hidden=true;$('#account').hidden=false;$('#hello').textContent='Olá, '+d.customer.full_name;$('#files').innerHTML=d.courtesies.map(g=>'<div class="row" style="padding:12px 0"><b>'+esc(g.title)+'</b><a class="btn" href="/api/customer/courtesies/'+encodeURIComponent(g.id)+'/download">Baixar PDF</a></div>').join('')||'<p>Você ainda não possui cortesias ativas.</p>'}
-$('#login').onsubmit=async e=>{e.preventDefault();const r=await fetch('/api/customer/login',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({email:$('#email').value,password:$('#password').value})});if(!r.ok){$('#message').textContent='E-mail ou senha inválidos';return}load()};
+async function load(){
+ const r=await fetch('/api/customer/me');
+ if(!r.ok)return;
+ const d=await r.json();
+ $('#login').hidden=true;$('#account').hidden=false;
+ $('#hello').textContent='Olá, '+d.customer.full_name;
+ const labels={pending:'Aguardando pagamento',checkout_failed:'Pagamento não concluído',paid:'Pagamento confirmado',delivered:'Entregue',refunded:'Reembolsado'};
+ $('#purchases').innerHTML=(d.purchases||[]).map(order=>{
+  const files=(order.files||[]).map(file=>'<div class="row" style="padding:10px 0"><span>'+esc(file.title)+'</span>'+
+  (file.downloadable?'<a class="btn" href="/api/customer/purchases/'+encodeURIComponent(file.kind)+'/'+encodeURIComponent(file.id)+'/download">Baixar PDF</a>':
+  '<small>'+(order.status==='refunded'?'Acesso indisponível':'Em processamento')+'</small>')+'</div>').join('');
+  return '<section class="card" style="margin-bottom:14px"><h4>'+esc(labels[order.status]||order.status)+'</h4><p class="muted">Pedido '+esc(order.id.slice(0,8))+' · '+esc((order.totalCents/100).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}))+'</p>'+files+'</section>';
+ }).join('')||'<p>Suas compras aparecerão aqui após confirmação. Os links também são enviados por e-mail.</p>';
+ $('#files').innerHTML=(d.courtesies||[]).map(g=>'<div class="row" style="padding:12px 0"><b>'+esc(g.title)+'</b><a class="btn" href="/api/customer/courtesies/'+encodeURIComponent(g.id)+'/download">Baixar PDF</a></div>').join('')||'<p>Você ainda não possui cortesias ativas.</p>';
+}$('#login').onsubmit=async e=>{e.preventDefault();const r=await fetch('/api/customer/login',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({email:$('#email').value,password:$('#password').value})});if(!r.ok){$('#message').textContent='E-mail ou senha inválidos';return}load()};
 $('#requestPIN').onclick=async()=>{
  const email=$('#email').value.trim();
  if(!email){$('#message').textContent='Informe seu e-mail para receber o link.';return;}

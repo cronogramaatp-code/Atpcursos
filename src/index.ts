@@ -10,7 +10,7 @@ import { appendProductPDF,productFiles,removeProductPDF } from "./product-files"
 import { overview,adminProducts,publishProduct,presence } from "./admin";
 import { adminCustomersPage, confirmPage, customerMaterialsPage } from "./admin-customers-ui";
 import { listCustomers,createCustomer,grantCourtesy,getCourtesies,resendCourtesy,revokeCourtesy,changeEmailRequest,passwordResetRequest,selfServicePINReset } from "./customer-admin";
-import { applyAction,courtesyDownload,courtesySessionDownload,login,logout,myAccount } from "./customer-public";
+import { applyAction,courtesyDownload,courtesySessionDownload,login,logout,myAccount,purchaseFileDownload } from "./customer-public";
 import { pinState,pinRequest,pinEnroll,pinLogin,pinLogout,hasAdminPin } from "./admin-pin";
 import { adminPinPage } from "./admin-pin-ui";
 
@@ -121,6 +121,8 @@ async function route(req:Request,env:Env,ctx:ExecutionContext):Promise<Response>
  if(p==="/api/customer/login"&&method==="POST")return login(req,env);
  if(p==="/api/customer/logout"&&method==="POST")return logout(req,env);
  if(p==="/api/customer/me"&&method==="GET")return myAccount(req,env);
+ const purchasedFile=p.match(/^\/api\/customer\/purchases\/(bundle|legacy)\/([a-f0-9-]{36})\/download$/i);
+ if(purchasedFile&&method==="GET")return purchaseFileDownload(req,env,purchasedFile[1],purchasedFile[2]);
  const accountAction=p.match(/^\/api\/customer\/action\/(password_reset|email_change)$/);
  if(accountAction&&method==="POST")return applyAction(req,env,accountAction[1]);
  const owned=p.match(/^\/api\/customer\/courtesies\/([a-f0-9-]{36})\/download$/i);
