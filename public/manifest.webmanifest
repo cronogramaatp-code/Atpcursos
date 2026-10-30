@@ -1,32 +1,32 @@
 {
-  "name": "ATPCursos — PDFs para concursos",
-  "short_name": "ATPCursos",
-  "description": "Loja de simulados, mapas mentais, apostilas, resumões e cronogramas em PDF.",
-  "lang": "pt-BR",
-  "start_url": "/loja",
-  "scope": "/",
-  "display": "standalone",
-  "orientation": "any",
-  "background_color": "#F8F3EA",
-  "theme_color": "#171512",
-  "icons": [
-    {
-      "src": "/brand/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/brand/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/brand/icon-512-maskable.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
-    }
-  ]
+    "name":  "atpconcursos — PDFs para concursos",
+    "short_name":  "atpconcursos",
+    "description":  "Loja de simulados, mapas mentais, apostilas, resumões e cronogramas em PDF.",
+    "lang":  "pt-BR",
+    "start_url":  "/loja",
+    "scope":  "/",
+    "display":  "standalone",
+    "orientation":  "any",
+    "background_color":  "#F5F6F2",
+    "theme_color":  "#153F59",
+    "icons":  [
+                  {
+                      "src":  "/brand/icon-192.png",
+                      "sizes":  "192x192",
+                      "type":  "image/png",
+                      "purpose":  "any"
+                  },
+                  {
+                      "src":  "/brand/icon-512.png",
+                      "sizes":  "512x512",
+                      "type":  "image/png",
+                      "purpose":  "any"
+                  },
+                  {
+                      "src":  "/brand/icon-512-maskable.png",
+                      "sizes":  "512x512",
+                      "type":  "image/png",
+                      "purpose":  "maskable"
+                  }
+              ]
 }
