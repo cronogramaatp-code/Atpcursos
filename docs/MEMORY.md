@@ -36,7 +36,9 @@ Documentos antigos docs/PROJECT_MEMORY.md, docs/BRANDING.md e docs/RELEASE-GATE.
 - Graphify: nenhuma workspace acessível; mapa conceitual do repositório vem de caminhos GitHub.
 - Context7: consultado para Cloudflare Workers/D1 e pdf-lib em sessões anteriores; confirmar versões e documentação ao implementar APIs.
 - Resend: domínio confirmado; não houve envio de e-mail real nesta etapa.
-- Testes unitários/build/E2E NÃO foram executados nesta etapa; estado segue PARTIAL.
+- GitHub Actions PR #8 executou em 29/10/2026: job Loja / pagamentos / marca d'agua PASS (npm ci, build, build Pages, npm test, schema smoke, audit); job MCP owner / autorizacao FAIL somente na etapa de vulnerabilidades de produção.
+- Diagnóstico CI específico: npm audit --omit=dev --audit-level=high encontrou **8 vulnerabilidades: 4 moderadas e 4 altas** em dependências do MCP (@modelcontextprotocol/client, @modelcontextprotocol/sdk, @modelcontextprotocol/server e transitivas body-parser, fast-uri, ip-address, qs). O erro é reproduzido no build do PR com alterações apenas em docs; não foi introduzido pelos documentos. A revisão de versões e correção mínima devem ser executadas com testes antes de merge.
+- Testes E2E e pagamento real NÃO foram executados nesta etapa; estado segue PARTIAL e bloqueio CI de segurança.
 
 ## 5. Gate e autorização
 PRODUCTION GATE = BLOCKED: sem checkout real, teste end-to-end e credenciais isoladas.
