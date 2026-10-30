@@ -48,6 +48,8 @@ test("admin routes require validated Cloudflare Access AND a PIN session",async(
   assert.doesNotMatch(pinPage,/<script src="\/app.js"/);
   const blocked=await app.fetch(request("/api/admin/products"),env,{} as any);
   assert.equal(blocked.status,401);
+  const crossOrigin=await app.fetch(new Request("https://staging-atpconcursos.example/api/admin/pin/request",{method:"POST",headers:{"Cf-Access-Jwt-Assertion":token,"Origin":"https://attacker.example"}}),env,{} as any);
+  assert.equal(crossOrigin.status,403);
   const requested=await pinRequest(env,"admin@example.com");
   assert.equal(requested.status,200);
   const pinToken=mail.match(/pin_token=([a-f0-9]{64})/)![1];
