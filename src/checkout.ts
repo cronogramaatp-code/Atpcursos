@@ -28,23 +28,29 @@ export async function createCheckout(req:Request,env:Env){
  ids=Array.isArray(d.productIds)&&d.productIds.every(x=>typeof x==="string")?d.productIds as string[]:[];
  if(name.length<2||name.length>120||/[<>\x00-\x1f]/.test(name)||!emailOK(email))return json({error:"Nome ou e-mail inválidos"},422);
  const {products,hash,pricing}=await quote(env,email,ids),orderId=uuid();
- await env.DB.prepare("INSERT INTO orders(id,buyer_name,buyer_email,buyer_email_hash,status,total_cents,full_cents,discount_cents,discount_rate,provider_order_nsu) VALUES(?,?,?,?,?,?,?,?,?,?)")
-  .bind(orderId,name,email,hash,"pending",pricing.totalCents,pricing.fullCents,pricing.discountCents,pricing.ratePercent,orderId).run();
+ // Read and validate all bundle files before inserting any order rows.
+ const fileSets: {itemId:string;product:P;files:{id:string;title:string;original_key:string;position:number}[]}[]=[];
  for(const p of products){
-  const itemId=uuid();
-  await env.DB.prepare("INSERT INTO order_items(id,order_id,product_id,title_snapshot,price_snapshot_cents,original_key_snapshot) VALUES(?,?,?,?,?,?)")
-   .bind(itemId,orderId,p.id,p.title,p.price_cents,p.original_key).run();
-  // Immutable file snapshots: future product revisions cannot change a paid buyer's bundle.
   const files=await env.DB.prepare("SELECT id,title,original_key,position FROM product_files WHERE product_id=? ORDER BY position,created_at,id")
    .bind(p.id).all<{id:string;title:string;original_key:string;position:number}>();
-  if(!files.results.length)throw Error("product invalid");
-  for(let pos=0;pos<files.results.length;pos++){
-   const file=files.results[pos];
-   await env.DB.prepare("INSERT INTO order_item_files(id,order_item_id,product_file_id,title_snapshot,original_key_snapshot,position) VALUES(?,?,?,?,?,?)")
-    .bind(uuid(),itemId,file.id,file.title,file.original_key,pos).run();
-  }
+  if(!files.results.length||files.results.some(f=>!f.id||!f.original_key||!f.title))throw Error("product invalid");
+  fileSets.push({itemId:uuid(),product:p,files:files.results});
  }
- const origin=env.PUBLIC_BASE_URL||new URL(req.url).origin;
+ // D1 batch executes these statements as one transaction: a failure rolls back
+ // the order and its immutable product-file snapshots before payment creation.
+ const statements:D1PreparedStatement[]=[
+  env.DB.prepare("INSERT INTO orders(id,buyer_name,buyer_email,buyer_email_hash,status,total_cents,full_cents,discount_cents,discount_rate,provider_order_nsu) VALUES(?,?,?,?,?,?,?,?,?,?)")
+   .bind(orderId,name,email,hash,"pending",pricing.totalCents,pricing.fullCents,pricing.discountCents,pricing.ratePercent,orderId)
+ ];
+ for(const {itemId,product:p,files} of fileSets){
+  statements.push(env.DB.prepare("INSERT INTO order_items(id,order_id,product_id,title_snapshot,price_snapshot_cents,original_key_snapshot) VALUES(?,?,?,?,?,?)")
+   .bind(itemId,orderId,p.id,p.title,p.price_cents,files[0].original_key));
+  files.forEach((f,pos)=>statements.push(
+   env.DB.prepare("INSERT INTO order_item_files(id,order_item_id,product_file_id,title_snapshot,original_key_snapshot,position) VALUES(?,?,?,?,?,?)")
+   .bind(uuid(),itemId,f.id,f.title,f.original_key,pos)
+  ));
+ }
+ await env.DB.batch(statements); const origin=env.PUBLIC_BASE_URL||new URL(req.url).origin;
  const r=await fetch("https://api.checkout.infinitepay.io/links",{
   method:"POST",headers:{"content-type":"application/json"},
   body:JSON.stringify({handle:env.INFINITEPAY_HANDLE,order_nsu:orderId,
