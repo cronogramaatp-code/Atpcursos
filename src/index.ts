@@ -11,6 +11,8 @@ import { overview,adminProducts,publishProduct,presence } from "./admin";
 import { adminCustomersPage, confirmPage, customerMaterialsPage } from "./admin-customers-ui";
 import { listCustomers,createCustomer,grantCourtesy,getCourtesies,resendCourtesy,revokeCourtesy,changeEmailRequest,passwordResetRequest } from "./customer-admin";
 import { applyAction,courtesyDownload,courtesySessionDownload,login,logout,myAccount } from "./customer-public";
+import { pinState,pinRequest,pinEnroll,pinLogin,pinLogout,hasAdminPin } from "./admin-pin";
+import { adminPinPage } from "./admin-pin-ui";
 
 async function route(req:Request,env:Env,ctx:ExecutionContext):Promise<Response>{
  const url=new URL(req.url),p=url.pathname,method=req.method;
@@ -39,6 +41,20 @@ async function route(req:Request,env:Env,ctx:ExecutionContext):Promise<Response>
    return plain("Cloudflare Access ainda não configurado para o painel",503);
   adminEmail=await adminIdentity(req,env);
   if(!adminEmail)return plain("Acesso negado",403);
+  // Cloudflare Access identifies the admin. The PIN is a separate, server-verified gate.
+  if(p.startsWith("/api/admin/pin/")){
+   if(method!=="GET"&&!originOK(req))return json({error:"Origem não permitida"},403);
+   if(p==="/api/admin/pin/status"&&method==="GET")return pinState(env,adminEmail);
+   if(p==="/api/admin/pin/request"&&method==="POST")return pinRequest(env,adminEmail);
+   if(p==="/api/admin/pin/enroll"&&method==="POST")return pinEnroll(req,env,adminEmail);
+   if(p==="/api/admin/pin/login"&&method==="POST")return pinLogin(req,env,adminEmail);
+   if(p==="/api/admin/pin/logout"&&method==="POST")return pinLogout(req,env,adminEmail);
+   return json({error:"Rota não encontrada"},404);
+  }
+  if(!(await hasAdminPin(req,env,adminEmail))){
+   if(method==="GET"&&(p==="/adm"||p.startsWith("/adm/")))return html(adminPinPage(),req);
+   return json({error:"Confirmação do PIN administrativo necessária"},401);
+  }
  }
  if((p==="/adm"||p==="/adm/")&&method==="GET")return html(adminPage(),req);
  if(p==="/adm/produtos"&&method==="GET")return html(adminImport(),req);
