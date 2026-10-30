@@ -9,8 +9,9 @@ export function validEmail(value: string): boolean {
 export function validName(value: string): boolean {
   return value.trim().length >= 2 && value.trim().length <= 120 && !/[\u0000-\u001f<>]/.test(value);
 }
+// A PIN must remain a string so leading zeroes survive every step.
 export function validPassword(value: string): boolean {
-  return value.length >= 12 && value.length <= 128;
+  return /^[0-9]{8}$/.test(value);
 }
 export function validCourtesyExpiry(expiry: number | null, current: number): boolean {
   return expiry === null || (Number.isSafeInteger(expiry) && expiry > current && expiry <= current + 366 * 86400);
@@ -26,17 +27,24 @@ export async function secretHash(secret: string): Promise<string> {
   return Array.from(new Uint8Array(hash)).map(x => x.toString(16).padStart(2, "0")).join("");
 }
 export const PBKDF2_ITERATIONS = 310000;
-export async function passwordHash(password: string): Promise<{ digest: string; salt: string; iterations: number }> {
-  if (!validPassword(password)) throw new Error("Password must contain 12 to 128 characters");
+// Short numeric PINs need a strong secret stored separately from the database.
+// The v1 domain separator prevents interchangeability with other HMAC uses.
+async function pepperedInput(pin: string, pepper: string): Promise<ArrayBuffer> {
+  if (!pepper || pepper.length < 32) throw new Error("PIN pepper unavailable");
+  const key = await crypto.subtle.importKey("raw",new TextEncoder().encode(pepper),{name:"HMAC",hash:"SHA-256"},false,["sign"]);
+  return crypto.subtle.sign("HMAC",key,new TextEncoder().encode("atpconcursos-pin-v1:"+pin));
+}
+export async function passwordHash(password: string, pepper: string): Promise<{ digest: string; salt: string; iterations: number }> {
+  if (!validPassword(password)) throw new Error("PIN must contain exactly 8 digits");
   const salt = newSecret();
-  const key = await crypto.subtle.importKey("raw",new TextEncoder().encode(password),"PBKDF2",false,["deriveBits"]);
+  const key = await crypto.subtle.importKey("raw",await pepperedInput(password,pepper),"PBKDF2",false,["deriveBits"]);
   const derived = await crypto.subtle.deriveBits({ name:"PBKDF2",hash:"SHA-256",salt:new TextEncoder().encode(salt),iterations:PBKDF2_ITERATIONS },key,256);
   const digest = Array.from(new Uint8Array(derived)).map(x=>x.toString(16).padStart(2,"0")).join("");
   return { digest, salt, iterations:PBKDF2_ITERATIONS };
 }
-export async function passwordMatch(password: string, salt: string, expected: string, iterations: number): Promise<boolean> {
-  if (!validPassword(password) || !/^[0-9a-f]{64}$/.test(salt) || !/^[0-9a-f]{64}$/.test(expected) || iterations !== PBKDF2_ITERATIONS) return false;
-  const key = await crypto.subtle.importKey("raw",new TextEncoder().encode(password),"PBKDF2",false,["deriveBits"]);
+export async function passwordMatch(password: string, salt: string, expected: string, iterations: number, pepper: string): Promise<boolean> {
+  if (!validPassword(password) || !/^[0-9a-f]{64}$/.test(salt) || !/^[0-9a-f]{64}$/.test(expected) || iterations !== PBKDF2_ITERATIONS || !pepper || pepper.length<32) return false;
+  const key = await crypto.subtle.importKey("raw",await pepperedInput(password,pepper),"PBKDF2",false,["deriveBits"]);
   const bits = new Uint8Array(await crypto.subtle.deriveBits({name:"PBKDF2",hash:"SHA-256",salt:new TextEncoder().encode(salt),iterations},key,256));
   const exp = Uint8Array.from(expected.match(/../g)!.map(x=>parseInt(x,16)));
   let diff = 0; for(let i=0;i<32;i++)diff|=bits[i]^exp[i];
