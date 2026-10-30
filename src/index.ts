@@ -6,6 +6,7 @@ import { clientJS } from "./client";
 import { quote,createCheckout,receiveWebhook,reconcile } from "./checkout";
 import { getDownload } from "./fulfillment";
 import { getBundleDownload } from "./bundle-fulfillment";
+import { listPublishedProducts,getPublishedProduct } from "./catalog";
 import { appendProductPDF,productFiles,removeProductPDF } from "./product-files";
 import { overview,adminProducts,publishProduct,presence } from "./admin";
 import { adminCustomersPage, confirmPage, customerMaterialsPage } from "./admin-customers-ui";
@@ -61,16 +62,11 @@ async function route(req:Request,env:Env,ctx:ExecutionContext):Promise<Response>
  if(p==="/adm/alunos"&&method==="GET")return html(adminCustomersPage(),req);
  if(["POST","PUT","PATCH","DELETE"].includes(method)&&p!=="/api/webhooks/infinitepay"&&!originOK(req))
   return json({error:"Origem não permitida"},403);
- if(p==="/api/products"&&method==="GET"){
-  const data=await env.DB.prepare("SELECT id,slug,title,category,discipline,contest,description,price_cents,page_count FROM products WHERE status='published' ORDER BY created_at DESC LIMIT 100").all();
-  return json({products:data.results});
- }
+ if(p==="/api/products"&&method==="GET")return listPublishedProducts(env);
  if(p.startsWith("/api/products/")&&method==="GET"){
   const slug=decodeURIComponent(p.slice("/api/products/".length));
-  const product=await env.DB.prepare("SELECT id,slug,title,category,discipline,contest,description,price_cents,page_count FROM products WHERE slug=? AND status='published'").bind(slug).first();
-  return product?json({product}):json({error:"Produto não encontrado"},404);
- }
- if(p==="/api/recommendations"&&method==="GET"){
+  return getPublishedProduct(env,slug);
+ } if(p==="/api/recommendations"&&method==="GET"){
   const id=url.searchParams.get("product")||"";
   const product=await env.DB.prepare("SELECT contest,discipline FROM products WHERE id=? AND status='published'")
    .bind(id).first<{contest:string;discipline:string}>();
