@@ -14,7 +14,7 @@ export async function adminProducts(req:Request,env:Env){
  if(req.method==="GET"){
   const schema=await env.DB.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='product_files'").first();
   const q=schema
-   ?"SELECT id,slug,title,category,price_cents,status,page_count,(SELECT COUNT(*) FROM product_files f WHERE f.product_id=products.id) AS file_count FROM products ORDER BY created_at DESC LIMIT 100"
+   ?"SELECT id,slug,title,category,price_cents,status,(SELECT CASE WHEN COUNT(*)>0 AND SUM(CASE WHEN f.page_count>0 THEN 1 ELSE 0 END)=COUNT(*) THEN SUM(f.page_count) ELSE NULL END FROM product_files f WHERE f.product_id=products.id) AS page_count,(SELECT COUNT(*) FROM product_files f WHERE f.product_id=products.id) AS file_count FROM products ORDER BY created_at DESC LIMIT 100"
    :"SELECT id,slug,title,category,price_cents,status,page_count,CASE WHEN original_key IS NULL THEN 0 ELSE 1 END AS file_count FROM products ORDER BY created_at DESC LIMIT 100";
   const r=await env.DB.prepare(q).all();
   return json({products:r.results,multiPdfReady:!!schema});

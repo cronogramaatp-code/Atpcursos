@@ -120,3 +120,19 @@ export async function changeEmailRequest(req:Request,env:Env,actor:string,id:str
 export async function passwordResetRequest(env:Env,actor:string,id:string){
  return issueAction(env,actor,id,"password_reset");
 }
+
+// Public self-service PIN recovery. Never reveal whether a customer exists.
+export async function selfServicePINReset(req:Request,env:Env){
+ if(!env.PIN_PEPPER||env.PIN_PEPPER.length<32||!mailReady(env))
+  return json({error:"Recuperação temporariamente indisponível"},503);
+ const data=await readJSON(req,512);
+ const email=typeof data.email==="string"?normalizeEmail(data.email):"";
+ if(!validEmail(email))return json({error:"Informe um e-mail válido"},422);
+ const account=await env.DB.prepare("SELECT id FROM customers WHERE email=? COLLATE NOCASE AND status='active'")
+  .bind(email).first<{id:string}>();
+ if(account){
+  // Operational errors remain private to avoid account enumeration.
+  try { await issueAction(env,"self_service",account.id,"password_reset"); } catch {}
+ }
+ return json({ok:true,message:"Se houver uma conta cadastrada, enviaremos um link para criar ou redefinir seu PIN."});
+}
