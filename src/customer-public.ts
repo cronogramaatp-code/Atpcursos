@@ -18,7 +18,7 @@ export async function login(req:Request,env:Env){
  const email=typeof body.email==="string"?normalizeEmail(body.email):"";
  const password=typeof body.password==="string"?body.password:"";
  if(!validEmail(email)||!validPassword(password))return json({error:"Credenciais inválidas"},401);
- if(!env.BUYER_HASH_KEY)return json({error:"Configuração de acesso pendente"},503);
+ if(!env.BUYER_HASH_KEY||!env.PIN_PEPPER||env.PIN_PEPPER.length<32)return json({error:"Configuração de acesso pendente"},503);
  // Five password attempts per recipient address per 15-minute rolling window.
  const identifier=await emailHash(email,env.BUYER_HASH_KEY),timestamp=now();
  await env.DB.prepare("INSERT INTO customer_login_limits(email_hash,window_start,attempts) VALUES(?,?,1) ON CONFLICT(email_hash) DO UPDATE SET window_start=CASE WHEN window_start<? THEN excluded.window_start ELSE window_start END, attempts=CASE WHEN window_start<? THEN 1 ELSE attempts+1 END")
@@ -28,7 +28,7 @@ export async function login(req:Request,env:Env){
  const record=await env.DB.prepare("SELECT id,password_salt,password_digest,password_iterations FROM customers WHERE email=? COLLATE NOCASE AND status='active'").bind(email)
   .first<{id:string;password_salt:string|null;password_digest:string|null;password_iterations:number|null}>();
  if(!record?.password_salt||!record.password_digest||!record.password_iterations||
-  !(await passwordMatch(password,record.password_salt,record.password_digest,record.password_iterations)))return json({error:"Credenciais inválidas"},401);
+  !(await passwordMatch(password,record.password_salt,record.password_digest,record.password_iterations,env.PIN_PEPPER)))return json({error:"Credenciais inválidas"},401);
  await env.DB.prepare("DELETE FROM customer_login_limits WHERE email_hash=?").bind(identifier).run();
  const secret=newSecret(),hash=await secretHash(secret);
  await env.DB.prepare("INSERT INTO customer_sessions(token_hash,customer_id,expires_at) VALUES(?,?,?)")
@@ -59,8 +59,9 @@ export async function applyAction(req:Request,env:Env,action:string){
  if(!row)return json({error:"Link expirado ou já utilizado"},403);
  if(action==="password_reset"){
   const pass=typeof data.password==="string"?data.password:"";
-  if(!validPassword(pass))return json({error:"A senha precisa ter de 12 a 128 caracteres"},422);
-  const cred=await passwordHash(pass);
+  if(!validPassword(pass))return json({error:"O PIN deve conter exatamente 8 números"},422);
+  if(!env.PIN_PEPPER||env.PIN_PEPPER.length<32)return json({error:"Configuração de PIN pendente"},503);
+  const cred=await passwordHash(pass,env.PIN_PEPPER);
   const statements=[
     env.DB.prepare("UPDATE customer_action_tokens SET used_at=CURRENT_TIMESTAMP WHERE token_hash=? AND used_at IS NULL AND expires_at>?").bind(hash,now()),
     env.DB.prepare("UPDATE customers SET password_salt=?,password_digest=?,password_iterations=?,updated_at=CURRENT_TIMESTAMP WHERE id=? AND status='active'").bind(cred.salt,cred.digest,cred.iterations,row.customer_id),

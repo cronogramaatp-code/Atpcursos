@@ -2,7 +2,7 @@ import { createRemoteJWKSet, jwtVerify } from "jose";
 export interface Env {
  DB: D1Database; PDFS: R2Bucket; ASSETS: Fetcher; ENVIRONMENT?: string;
  INFINITEPAY_HANDLE?: string; RESEND_API_KEY?: string; RESEND_FROM_EMAIL?: string;
- PUBLIC_BASE_URL?: string; BUYER_HASH_KEY?: string; CHECKOUT_ENABLED?: string;
+ PUBLIC_BASE_URL?: string; BUYER_HASH_KEY?: string; PIN_PEPPER?: string; CHECKOUT_ENABLED?: string;
  ACCESS_TEAM_DOMAIN?: string; ACCESS_AUD?: string; ADMIN_ALLOWED_EMAILS?: string;
 }
 export const uuid=()=>crypto.randomUUID();
