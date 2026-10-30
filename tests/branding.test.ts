@@ -10,7 +10,7 @@ const width=(buffer:Buffer)=>buffer.readUInt32BE(16);
 const height=(buffer:Buffer)=>buffer.readUInt32BE(20);
 test("PWA manifest references real icons, including maskable",()=>{
  const m=JSON.parse(readFileSync(file("manifest.webmanifest"),"utf8"));
- assert.equal(m.name,"ATPCursos — PDFs para concursos");
+ assert.equal(m.name,"atpconcursos — PDFs para concursos");
  assert.equal(m.start_url,"/loja");
  assert.equal(m.display,"standalone");
  assert.ok(m.icons.some((i:{purpose:string})=>i.purpose==="maskable"));
@@ -38,7 +38,7 @@ test("all important app HTML pages reference real logo and absolute social URLs"
   const r=await worker.fetch(new Request("https://atpcursos.example"+p),{} as any,{} as any);
   const html=await r.text();
   assert.equal(r.status,200);
-  assert.match(html,/\/brand\/wordmark-atpcursos\.png/);
+  assert.match(html,/\/brand\/logo-atp\.png/);
   assert.match(html,/\/manifest\.webmanifest/);
   assert.match(html,/\/brand\/favicon\.ico/);
   assert.match(html,/https:\/\/atpcursos\.example\/brand\/og-atpcursos\.jpg/);
@@ -65,10 +65,10 @@ test("amber logo preserves original source privately and regenerates all sharing
  assert.ok(!existsSync(file("brand/logo-atp-original.png")),"the original should not be publicly exposed");
  assert.notDeepEqual(readFileSync(source),readFileSync(file("brand/logo-atp.png")),"the premium logo should be recolored");
  const manifest=JSON.parse(readFileSync(file("manifest.webmanifest"),"utf8"));
- assert.equal(manifest.theme_color,"#171512");
- assert.equal(manifest.background_color,"#F8F3EA");
+ assert.equal(manifest.theme_color,"#153F59");
+ assert.equal(manifest.background_color,"#F5F6F2");
  const workerScript=readFileSync(file("sw.js"),"utf8");
- assert.match(workerScript,/atpcursos-public-amber-v3/,"service worker must expire old logo cache");
+ assert.match(workerScript,/atpcursos-public-brand-v4/,"service worker must expire old logo cache");
  for(const path of ["brand/logo-atp.png","brand/favicon-16.png","brand/favicon-32.png","brand/favicon-48.png","brand/icon-192.png","brand/icon-512.png","brand/icon-512-maskable.png"]){
   const image=readFileSync(file(path));
   assert.equal(image.subarray(1,4).toString("ascii"),"PNG");

@@ -27,14 +27,14 @@ export function salesPage(variant: number):string{
  <div class="trust-row"><span>PDF personalizado</span><span>Entrega digital</span><span>Preço claro</span></div></div>
  <div class="hero-visual hero-thay"><img class="thay-avatar ${variant===1||variant===3?"portrait":"full"}" src="/brand/thay-avatar-${variant===1||variant===3?"portrait":"full"}.webp?v=sem-letras-2" width="${variant===1||variant===3?840:582}" height="${variant===1||variant===3?1078:1066}" alt="Avatar ilustrada da Thay em uniforme da área de segurança" decoding="async" fetchpriority="high"><div class="hero-mini">${offer.note}</div></div>
  </section>
- <section class="section-heading"><div><span class="eyebrow">ATPCursos · Materiais digitais</span><h2>${offer.title}</h2><p>${offer.intro}</p></div></section>
+ <section class="section-heading"><div><span class="eyebrow">atpconcursos · Materiais digitais</span><h2>${offer.title}</h2><p>${offer.intro}</p></div></section>
  <div class="feature-grid" aria-label="Vantagens"><div class="feature"><span class="feature-icon">01</span><h3>${offer.bullets[0]}</h3><p>Escolha de acordo com seus objetivos e as opções disponíveis.</p></div>
  <div class="feature"><span class="feature-icon">02</span><h3>${offer.bullets[1]}</h3><p>Estude com o formato digital adequado para sua rotina.</p></div>
  <div class="feature"><span class="feature-icon">03</span><h3>${offer.bullets[2]}</h3><p>Informações claras sobre o material e o processo.</p></div>
  <div class="feature"><span class="feature-icon">✓</span><h3>Seleção sem pressão</h3><p>Compare materiais com tranquilidade antes de decidir.</p></div></div>
  ${catalog}
  <div id="como-funciona">${faq}</div>
- <div class="bottom-cta"><div><h2>Encontre seu próximo PDF.</h2><p>Confira os materiais disponíveis no catálogo do ATPCursos.</p></div><a class="btn gold" href="#catalogo">Ver materiais</a></div>
+ <div class="bottom-cta"><div><h2>Encontre seu próximo PDF.</h2><p>Confira os materiais disponíveis no catálogo do atpconcursos.</p></div><a class="btn gold" href="#catalogo">Ver materiais</a></div>
  `, `Materiais para concursos · ${offer.label}`);
 }
 

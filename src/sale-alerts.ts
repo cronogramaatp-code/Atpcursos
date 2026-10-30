@@ -11,7 +11,7 @@ export function saleAlertText(order:ConfirmedSale):string {
     !["paid","delivered"].includes(order.status))throw Error("INVALID_CONFIRMED_SALE");
  const brl=(cents:number)=>(cents/100).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
  return [
-  "ATPCursos — nova venda confirmada.",
+  "atpconcursos — nova venda confirmada.",
   "Pedido: "+order.id,
   "Valor confirmado: "+brl(order.total_cents),
   "Desconto concedido: "+brl(order.discount_cents),
@@ -48,7 +48,7 @@ export async function notifyConfirmedSale(env:Env,orderId:string):Promise<boolea
     "content-type":"application/json",
     "Idempotency-Key":"atpcursos-sale-"+order.id},
    body:JSON.stringify({from:env.RESEND_FROM_EMAIL,to:[to],
-    subject:"ATPCursos — venda confirmada",text:message})
+    subject:"atpconcursos — venda confirmada",text:message})
   });
   if(!response.ok)throw Error("PROVIDER_SEND_FAILED");
   await env.DB.prepare(
