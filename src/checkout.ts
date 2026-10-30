@@ -55,7 +55,7 @@ export async function createCheckout(req:Request,env:Env){
   method:"POST",headers:{"content-type":"application/json"},
   body:JSON.stringify({handle:env.INFINITEPAY_HANDLE,order_nsu:orderId,
    redirect_url:origin+"/meus-materiais",webhook_url:origin+"/api/webhooks/infinitepay",
-   items:[{quantity:1,price:pricing.totalCents,description:"Pedido digital ATPCursos "+orderId.slice(0,8)}],
+   items:[{quantity:1,price:pricing.totalCents,description:"Pedido digital atpconcursos "+orderId.slice(0,8)}],
    customer:{name,email}})});
  const res=await r.json() as {url?:string;link?:string;checkout_url?:string};
  const checkoutUrl=res.url||res.link||res.checkout_url||"";

@@ -63,10 +63,10 @@ export async function fulfillBundleOrder(env:Env,orderId:string):Promise<boolean
     .bind(await sha256(token),f.id,now()+72*3600,5).run();
    links.push(cleanLabel(f.title_snapshot)+"\n"+env.PUBLIC_BASE_URL+"/api/bundle-download/"+token);
   }
-  const message="Seus materiais personalizados ATPCursos estão prontos.\n\n"+links.join("\n\n")+"\n\nCada link expira em 72 horas e permite até 5 downloads.";
+  const message="Seus materiais personalizados atpconcursos estão prontos.\n\n"+links.join("\n\n")+"\n\nCada link expira em 72 horas e permite até 5 downloads.";
   const mail=await fetch("https://api.resend.com/emails",{
    method:"POST",headers:{"authorization":"Bearer "+env.RESEND_API_KEY,"content-type":"application/json","Idempotency-Key":"bundle-"+orderId},
-   body:JSON.stringify({from:env.RESEND_FROM_EMAIL,to:[order.buyer_email],subject:"Seus PDFs ATPCursos estão prontos",text:message})
+   body:JSON.stringify({from:env.RESEND_FROM_EMAIL,to:[order.buyer_email],subject:"Seus PDFs atpconcursos estão prontos",text:message})
   });
   if(!mail.ok)throw Error("EMAIL_UNAVAILABLE");
   await env.DB.prepare("UPDATE bundle_notifications SET status='sent',sent_at=CURRENT_TIMESTAMP,updated_at=CURRENT_TIMESTAMP WHERE order_id=?").bind(orderId).run();
@@ -89,5 +89,5 @@ export async function getBundleDownload(env:Env,token:string){
  const updated=await env.DB.prepare("UPDATE bundle_download_tokens SET remaining_uses=remaining_uses-1 WHERE token_hash=? AND revoked_at IS NULL AND expires_at>? AND remaining_uses>0")
   .bind(await sha256(token),now()).run();
  if((updated.meta?.changes||0)!==1)return plain("Limite de downloads atingido",403);
- return new Response(file.body,{headers:{"content-type":"application/pdf","content-disposition":"attachment; filename=ATPCursos-personalizado.pdf","cache-control":"private, no-store","referrer-policy":"no-referrer","x-content-type-options":"nosniff"}});
+ return new Response(file.body,{headers:{"content-type":"application/pdf","content-disposition":"attachment; filename=atpconcursos-personalizado.pdf","cache-control":"private, no-store","referrer-policy":"no-referrer","x-content-type-options":"nosniff"}});
 }
