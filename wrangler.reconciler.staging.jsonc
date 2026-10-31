@@ -1,0 +1,42 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "atpconcursos-reconciler-staging",
+  "main": "src/reconciler-worker.ts",
+  "compatibility_date": "2026-10-30",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "workers_dev": false,
+  "preview_urls": false,
+  "observability": {
+    "enabled": true
+  },
+  "triggers": {
+    "crons": [
+      "*/10 * * * *"
+    ]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "atpcursos-staging-db",
+      "database_id": "e8bca86c-c018-4ef7-ab85-c5508f9b1caa"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "PDFS",
+      "bucket_name": "atpcursos-staging-pdfs"
+    }
+  ],
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "run_worker_first": true
+  },
+  "vars": {
+    "ENVIRONMENT": "staging",
+    "RECONCILIATION_ENABLED": "false",
+    "CHECKOUT_ENABLED": "false"
+  }
+}
