@@ -44,7 +44,7 @@ export async function fulfillOrder(env:Env,id:string){
    const emailResponse=await fetch("https://api.resend.com/emails",{method:"POST",
     headers:{"authorization":"Bearer "+env.RESEND_API_KEY,"content-type":"application/json","Idempotency-Key":delivery.id},
     body:JSON.stringify({from:env.RESEND_FROM_EMAIL,to:[order.buyer_email],
-     subject:"Seu material ATPCursos está pronto",text:"Material: "+title+"\nAcesse seu PDF personalizado: "+link+"\nO link expira em 72 horas e permite até 5 downloads."})});
+     subject:"Seu material atpconcursos está pronto",text:"Material: "+title+"\nAcesse seu PDF personalizado: "+link+"\nO link expira em 72 horas e permite até 5 downloads."})});
    if(!emailResponse.ok)throw Error("EMAIL_UNAVAILABLE");
    await env.DB.prepare("UPDATE deliveries SET status='sent',personalized_key=?,sent_at=CURRENT_TIMESTAMP,updated_at=CURRENT_TIMESTAMP,error_code=NULL WHERE id=?")
     .bind(key,delivery.id).run();
@@ -72,6 +72,6 @@ export async function getDownload(env:Env,token:string){
  const updated=await env.DB.prepare("UPDATE download_tokens SET remaining_uses=remaining_uses-1 WHERE token_hash=? AND revoked_at IS NULL AND expires_at>? AND remaining_uses>0")
  .bind(hash,now()).run();
  if((updated.meta?.changes||0)!==1)return plain("Limite de downloads atingido",403);
- return new Response(file.body,{headers:{"content-type":"application/pdf","content-disposition":"attachment; filename=ATPCursos-personalizado.pdf",
+ return new Response(file.body,{headers:{"content-type":"application/pdf","content-disposition":"attachment; filename=atpconcursos-personalizado.pdf",
   "cache-control":"private, no-store","referrer-policy":"no-referrer","x-content-type-options":"nosniff"}});
 }
